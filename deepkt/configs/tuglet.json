@@ -1,0 +1,42 @@
+{
+    "exp_name": "tuglet",
+    "agent": "DMKTAgent",
+    "mode": "train",
+    "metric": "auc",
+  
+    "cuda": true,
+    "gpu_device": 0,
+    "seed": 1024,
+  
+    "data_name": "data1",
+    "min_seq_len": 2,
+    "max_seq_len": 50,
+    "max_subseq_len": 8,
+    "stride": 50,
+    "validation_split": 0.2,
+    "shuffle": true,
+    "num_workers": 8,
+    "batch_size": 32,
+    "test_batch_size": 1024,
+  
+    "init_std": 0.2,
+    "num_concepts": 10,
+    "key_dim": 50,
+    "value_dim": 50,
+    "summary_dim": 50,
+  
+    "optimizer": "adam",
+    "learning_rate": 0.01,
+    "epsilon": 0.1,
+    "max_grad_norm": 50.0,
+    "momentum": 0.9,
+    "weight_decay": 0,
+    "beta1": 0.5,
+    "beta2": 0.999,
+    "max_epoch": 20,
+  
+    "log_interval": 10,
+    "validate_every": 1,
+    "checkpoint_file": "checkpoint.pth.tar"
+  }
+  
