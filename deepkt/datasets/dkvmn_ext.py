@@ -17,6 +17,7 @@ class DKVMN_ExtDataset(Dataset):
         """
         self.max_seq_len = max_seq_len
         self.min_seq_len = min_seq_len
+        self.max_subseq_len = max_subseq_len
         self.num_items = num_items
         if stride is not None and train:
             self.stride = stride
@@ -48,23 +49,34 @@ class DKVMN_ExtDataset(Dataset):
 
         idx: sample index
         """
-        questions = self.q_data[idx]
-        answers = self.a_data[idx]
+        questions = self.q_data[idx] # questions = [Q1, Q2, ...]
+        answers = self.a_data[idx]   # answers = [A1, A2, ...]
         lectures = self.l_data[idx]
         assert len(questions) == len(answers) == len(lectures)
+        interactions = []
 
-        if self.metric == "rmse":
-            interactions = []
-            for i, q in enumerate(questions):
-                interactions.append([q, answers[i]])
-            interactions = np.array(interactions, dtype=float)
-        else:
-            interactions = np.zeros(self.max_seq_len, dtype=int)
-            for i, q in enumerate(questions):
-                interactions[i] = q + answers[i] * self.num_items
-        target_answers = answers
-        target_mask = (questions != 0)
-        return interactions, lectures, questions, target_answers, target_mask
+        
+        target_answers = []
+        target_mask = []
+        for question_list, answer_list in zip(questions, answers):
+            if self.metric == "rmse":
+                interaction_list = []
+                for i, q in enumerate(question_list):
+                    interaction_list.append([q, answer_list[i]])
+                interaction_list = np.array(interaction_list, dtype=float)
+            else:
+                interaction_list = np.zeros(self.max_subseq_len, dtype=int)
+                for i, q in enumerate(question_list):
+                    interaction_list[i] = q + answer_list[i] * self.num_items
+            # instead of append like this which leads to [[...][....]] we can instead to get something like [...............]
+            # target_answers.append(answer_list)
+            # target_mask.append(question_list != 0)
+            target_answers.extend(answer_list)
+            target_mask.extend(question_list != 0)
+
+            interactions.append(interaction_list)
+
+        return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
 
     # def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
     #     """
@@ -114,6 +126,38 @@ class DKVMN_ExtDataset(Dataset):
     #         return np.array(q_data), np.array(a_data)
 
 
+    # def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
+    #     q_data = []
+    #     a_data = []
+    #     l_data = []
+
+    #     for q_list, a_list, l_list in zip(q_records, a_records, l_records):
+    #         assert len(q_list) == len(a_list)
+
+    #         if len(q_list) >= self.max_seq_len:
+    #             q_list = q_list[: self.max_seq_len]
+    #             a_list = a_list[: self.max_seq_len]
+    #         else:
+    #             q_list.extend([0]*(self.max_seq_len - len(q_list)))
+    #             a_list.extend([0]*(self.max_seq_len - len(a_list)))
+
+    #         assert len(q_list) == len(a_list)
+
+    #         if len(l_list) >= self.max_seq_len:
+    #             l_list = l_list[: self.max_seq_len]
+    #         else:
+    #             l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
+
+    #         assert len(q_list) == len(a_list) == len(l_list) 
+
+    #         q_data.append(q_list)
+    #         a_data.append(a_list)
+    #         l_data.append(l_list)
+
+
+    #     return np.array(q_data), np.array(a_data), np.array(l_data)
+
+
     def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
         q_data = []
         a_data = []
@@ -121,20 +165,26 @@ class DKVMN_ExtDataset(Dataset):
 
         for q_list, a_list, l_list in zip(q_records, a_records, l_records):
             assert len(q_list) == len(a_list)
+            padding = Padding(max_subseq_len, side='left', fillvalue=0)
 
             if len(q_list) >= self.max_seq_len:
                 q_list = q_list[: self.max_seq_len]
                 a_list = a_list[: self.max_seq_len]
             else:
-                q_list.extend([0]*(self.max_seq_len - len(q_list)))
-                a_list.extend([0]*(self.max_seq_len - len(a_list)))
-
+                q_list.extend([[0] for _ in range (self.max_seq_len - len(q_list))])
+                a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
+            
             assert len(q_list) == len(a_list)
 
             if len(l_list) >= self.max_seq_len:
                 l_list = l_list[: self.max_seq_len]
             else:
                 l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
+
+
+            q_list = [padding({"q": q[-max_subseq_len:]})["q"] for q in q_list]
+            a_list = [padding({"a": a[-max_subseq_len:]})["a"] for a in a_list]
+            l_list = [padding({"l": l[-max_subseq_len:]})["l"] for l in l_list]
 
             assert len(q_list) == len(a_list) == len(l_list) 
 
