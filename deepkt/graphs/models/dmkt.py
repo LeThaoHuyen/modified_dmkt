@@ -72,7 +72,7 @@ class DMKT(nn.Module):
         if self.metric == 'rmse':
             qa_data = qa_data.float()
         batch_size, seq_len = l_data.size(0), l_data.size(1)
-        question_len, lec_len =  l_data.size(2), q_data.size(2)
+        question_len, lec_len =  q_data.size(2), l_data.size(2)
         
         self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
         nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
@@ -81,7 +81,7 @@ class DMKT(nn.Module):
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
         l_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
 
-        qs = torch.Tensor(batch_size, self.value_dim).to(self.device)
+        #qs = torch.Tensor(batch_size, self.value_dim).to(self.device)
         ls = torch.Tensor(batch_size, self.value_dim).to(self.device)
 
         sliced_q_data = torch.chunk(q_data, seq_len, dim=1)
@@ -92,7 +92,7 @@ class DMKT(nn.Module):
         for i in range(seq_len):
             nn.init.zeros_(q_read_content)
             nn.init.zeros_(l_read_content)
-            nn.init.zeros_(qs)
+            #nn.init.zeros_(qs)
             nn.init.zeros_(ls)
 
             q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
@@ -120,6 +120,8 @@ class DMKT(nn.Module):
                 # qs += q
                 # this where we need to handle each question seperatedly 
                 q_read_content = self.read(q_correlation_weight)
+
+                # shoudl we concat l_read_content and ls at this point?
                 mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
                 summary_output = self.tanh(self.summary_fc(mastery_level))
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))

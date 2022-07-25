@@ -9,7 +9,7 @@ class DKVMN_ExtDataset(Dataset):
     """
 
     def __init__(self, q_records, a_records, l_records, num_items, max_seq_len, min_seq_len=2,
-                 max_subseq_len=2, stride=None, train=True, metric="auc"):
+                 q_subseq_len=8, l_subseq_len=10, stride=None, train=True, metric="auc"):
         """
         :param min_seq_len: used to filter out seq. less than min_seq_len
         :param max_seq_len: used to truncate seq. greater than max_seq_len
@@ -17,7 +17,7 @@ class DKVMN_ExtDataset(Dataset):
         """
         self.max_seq_len = max_seq_len
         self.min_seq_len = min_seq_len
-        self.max_subseq_len = max_subseq_len
+        self.q_subseq_len = q_subseq_len
         self.num_items = num_items
         if stride is not None and train:
             self.stride = stride
@@ -27,7 +27,7 @@ class DKVMN_ExtDataset(Dataset):
         self.metric = metric
 
         self.q_data, self.a_data, self.l_data = self._transform(
-            q_records, a_records, l_records, max_subseq_len)
+            q_records, a_records, l_records, q_subseq_len, l_subseq_len)
         print("train samples.: {}".format(self.l_data.shape))
         self.length = len(self.q_data)
 
@@ -65,7 +65,7 @@ class DKVMN_ExtDataset(Dataset):
                     interaction_list.append([q, answer_list[i]])
                 interaction_list = np.array(interaction_list, dtype=float)
             else:
-                interaction_list = np.zeros(self.max_subseq_len, dtype=int)
+                interaction_list = np.zeros(self.q_subseq_len, dtype=int)
                 for i, q in enumerate(question_list):
                     interaction_list[i] = q + answer_list[i] * self.num_items
             # instead of append like this which leads to [[...][....]] we can instead to get something like [...............]
@@ -75,6 +75,8 @@ class DKVMN_ExtDataset(Dataset):
             target_mask.extend(question_list != 0)
 
             interactions.append(interaction_list)
+
+        # print(target_mask)
 
         return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
 
@@ -158,18 +160,17 @@ class DKVMN_ExtDataset(Dataset):
     #     return np.array(q_data), np.array(a_data), np.array(l_data)
 
 
-    def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
+    def _transform(self, q_records, a_records, l_records, q_subseq_len, l_subseq_len):
         q_data = []
         a_data = []
         l_data = []
 
         for q_list, a_list, l_list in zip(q_records, a_records, l_records):
             assert len(q_list) == len(a_list)
-            padding = Padding(max_subseq_len, side='left', fillvalue=0)
-
+            
             if len(q_list) >= self.max_seq_len:
-                q_list = q_list[: self.max_seq_len]
-                a_list = a_list[: self.max_seq_len]
+                q_list = q_list[-self.max_seq_len:]
+                a_list = a_list[-self.max_seq_len:]
             else:
                 q_list.extend([[0] for _ in range (self.max_seq_len - len(q_list))])
                 a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
@@ -177,14 +178,17 @@ class DKVMN_ExtDataset(Dataset):
             assert len(q_list) == len(a_list)
 
             if len(l_list) >= self.max_seq_len:
-                l_list = l_list[: self.max_seq_len]
+                l_list = l_list[-self.max_seq_len:]
             else:
                 l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
 
+            #padding = Padding(max_subseq_len, side='left', fillvalue=0)
+            q_padding = Padding(q_subseq_len, side='left', fillvalue=0)
+            l_padding = Padding(l_subseq_len, side='left', fillvalue=0)
 
-            q_list = [padding({"q": q[-max_subseq_len:]})["q"] for q in q_list]
-            a_list = [padding({"a": a[-max_subseq_len:]})["a"] for a in a_list]
-            l_list = [padding({"l": l[-max_subseq_len:]})["l"] for l in l_list]
+            q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
+            a_list = [q_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
+            l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
 
             assert len(q_list) == len(a_list) == len(l_list) 
 

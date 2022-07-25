@@ -31,7 +31,9 @@ class BaseDataLoader:
         self.min_seq_len = config["min_seq_len"] if "min_seq_len" in config else None
         self.max_seq_len = config["max_seq_len"] if "max_seq_len" in config else None
         self.stride = config["stride"] if "stride" in config else None
-        self.max_subseq_len = config["max_subseq_len"] if "max_subseq_len" in config else None
+        #self.max_subseq_len = config["max_subseq_len"] if "max_subseq_len" in config else None
+        self.q_subseq_len = config["q_subseq_len"]
+        self.l_subseq_len = config["l_subseq_len"]
 
         self.num_items = None
         self.train_data = None
@@ -60,7 +62,8 @@ class BaseDataLoader:
                                                    self.num_items,
                                                    self.max_seq_len,
                                                    min_seq_len=self.min_seq_len,
-                                                   max_subseq_len=self.max_subseq_len,
+                                                   q_subseq_len=self.q_subseq_len,
+                                                   l_subseq_len=self.l_subseq_len,
                                                    stride=self.stride,
                                                    train=True,
                                                    metric=self.metric)
@@ -111,7 +114,8 @@ class BaseDataLoader:
                                                       self.num_items,
                                                       self.max_seq_len,
                                                       min_seq_len=self.min_seq_len,
-                                                      max_subseq_len=self.max_subseq_len,
+                                                      q_subseq_len=self.q_subseq_len,
+                                                      l_subseq_len=self.l_subseq_len,
                                                       stride=self.stride,
                                                       train=False,
                                                       metric=self.metric)
