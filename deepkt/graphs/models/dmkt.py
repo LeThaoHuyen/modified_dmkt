@@ -36,20 +36,24 @@ class DMKT(nn.Module):
         self.value_matrix = None
 
         # initialize the layers
-        self.q_embed_matrix = nn.Embedding(num_embeddings=self.num_questions + 1,
-                                           embedding_dim=self.key_dim,
-                                           padding_idx=0)
+        # self.q_embed_matrix = nn.Embedding(num_embeddings=self.num_questions + 1,
+        #                                    embedding_dim=self.key_dim,
+        #                                    padding_idx=0)
 
-        self.l_embed_matrix = nn.Embedding(num_embeddings=self.num_nongradable_items + 1,
-                                           embedding_dim=self.value_dim,
-                                           padding_idx=0)
-        if self.metric == "rmse":
-            self.qa_embed_matrix = nn.Linear(2, self.value_dim)
-        else:
-            self.qa_embed_matrix = nn.Embedding(num_embeddings=2 * self.num_questions + 1,
-                                                embedding_dim=self.value_dim,
-                                                padding_idx=0)
+        # self.l_embed_matrix = nn.Embedding(num_embeddings=self.num_nongradable_items + 1,
+        #                                    embedding_dim=self.value_dim,
+        #                                    padding_idx=0)
+        # if self.metric == "rmse":
+        #     self.qa_embed_matrix = nn.Linear(2, self.value_dim)
+        # else:
+        #     self.qa_embed_matrix = nn.Embedding(num_embeddings=2 * self.num_questions + 1,
+        #                                         embedding_dim=self.value_dim,
+        #                                         padding_idx=0)
         # self.qa_embed_matrix = nn.Linear(2, self.value_dim)
+        
+        self.q_embed_matrix = nn.Linear(8, self.key_dim)
+        self.l_embed_matrix = nn.Linear(8, self.value_dim)
+        self.qa_emebed_matrix = nn.Linear(9, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
