@@ -59,26 +59,45 @@ class DKVMN_ExtDataset(Dataset):
         target_answers = []
         target_mask = []
         for question_list, answer_list in zip(questions, answers):
-            if self.metric == "rmse":
-                interaction_list = []
-                for i, q in enumerate(question_list):
-                    interaction_list.append([q, answer_list[i]])
-                interaction_list = np.array(interaction_list, dtype=float)
-            else:
-                interaction_list = np.zeros(self.q_subseq_len, dtype=int)
-                for i, q in enumerate(question_list):
-                    interaction_list[i] = q + answer_list[i] * self.num_items
+            # if self.metric == "rmse":
+            #     interaction_list = []
+            #     for i, q in enumerate(question_list):
+            #         interaction_list.append([q, answer_list[i]])
+            #     interaction_list = np.array(interaction_list, dtype=float)
+            # else:
+            #     interaction_list = np.zeros(self.q_subseq_len, dtype=int)
+            #     for i, q in enumerate(question_list):
+            #         interaction_list[i] = q + answer_list[i] * self.num_items
+            interaction_list = []
+            for i, q in enumerate(question_list):
+                # q = [x1, x2, x3, ..., x8]
+                # qa = [x1,x2, .., x8, a]
+                q = list(q)
+                if self.isPaddingVector(q):
+                    target_mask.append(False)
+                else:
+                    target_mask.append(True)
+
+                q.append(answer_list[i])
+                interaction_list.append(q)
+                
+            
+            interaction_list = np.array(interaction_list, dtype=float)
+            interactions.append(interaction_list)
             # instead of append like this which leads to [[...][....]] we can instead to get something like [...............]
             # target_answers.append(answer_list)
             # target_mask.append(question_list != 0)
             target_answers.extend(answer_list)
-            target_mask.extend(question_list != 0)
 
-            interactions.append(interaction_list)
-
-        # print(target_mask)
+            #target_mask.extend(question_list != [0,0,0,0,0,0,0,0])
 
         return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
+    def isPaddingVector(self, q):
+        count = 0
+        for x in q:
+            if x == 0:
+                count += 1
+        return count == 8
 
     # def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
     #     """
@@ -172,7 +191,7 @@ class DKVMN_ExtDataset(Dataset):
                 q_list = q_list[-self.max_seq_len:]
                 a_list = a_list[-self.max_seq_len:]
             else:
-                q_list.extend([[0] for _ in range (self.max_seq_len - len(q_list))])
+                q_list.extend([[[0,0,0,0,0,0,0,0]] for _ in range (self.max_seq_len - len(q_list))])
                 a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
             
             assert len(q_list) == len(a_list)
@@ -180,14 +199,15 @@ class DKVMN_ExtDataset(Dataset):
             if len(l_list) >= self.max_seq_len:
                 l_list = l_list[-self.max_seq_len:]
             else:
-                l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
+                l_list.extend([[[0,0,0,0,0,0,0,0]] for _ in range (self.max_seq_len - len(l_list))])
 
             #padding = Padding(max_subseq_len, side='left', fillvalue=0)
-            q_padding = Padding(q_subseq_len, side='left', fillvalue=0)
-            l_padding = Padding(l_subseq_len, side='left', fillvalue=0)
+            q_padding = Padding(q_subseq_len, side='left', fillvalue=[0,0,0,0,0,0,0,0])
+            a_padding = Padding(q_subseq_len, side='left', fillvalue=0)
+            l_padding = Padding(l_subseq_len, side='left', fillvalue=[0,0,0,0,0,0,0,0])
 
             q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
-            a_list = [q_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
+            a_list = [a_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
             l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
 
             assert len(q_list) == len(a_list) == len(l_list) 

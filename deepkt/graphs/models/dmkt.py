@@ -53,7 +53,7 @@ class DMKT(nn.Module):
         
         self.q_embed_matrix = nn.Linear(8, self.key_dim)
         self.l_embed_matrix = nn.Linear(8, self.value_dim)
-        self.qa_emebed_matrix = nn.Linear(9, self.value_dim)
+        self.qa_embed_matrix = nn.Linear(9, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -69,15 +69,19 @@ class DMKT(nn.Module):
     def forward(self, q_data, qa_data, l_data):
         """
         data_type: np.array
-        q_data: batch_size, seq_len, a_subseq_len
-        qa_data: batch_size, seq_len, a_subseq_len
-        l_data: batch_size, seq_len, na_subseq_len
+        q_data: batch_size, seq_len, a_subseq_len, 8
+        qa_data: batch_size, seq_len, a_subseq_len, 9
+        l_data: batch_size, seq_len, na_subseq_len, 9
         """
         if self.metric == 'rmse':
             qa_data = qa_data.float()
+        q_data = q_data.float()
+        qa_data = qa_data.float()
+        l_data = l_data.float()
+
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
-        
+
         self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
         nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
         self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
@@ -99,9 +103,10 @@ class DMKT(nn.Module):
             #nn.init.zeros_(qs)
             nn.init.zeros_(ls)
 
-            q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
-            qa_embed_data = self.qa_embed_matrix(sliced_qa_data[i].squeeze(1).long())
-            l_embed_data = self.l_embed_matrix(sliced_l_data[i].squeeze(1).long())
+            # q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
+            q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1))
+            qa_embed_data = self.qa_embed_matrix(sliced_qa_data[i].squeeze(1))
+            l_embed_data = self.l_embed_matrix(sliced_l_data[i].squeeze(1))
 
             sliced_q_embed_data = torch.chunk(q_embed_data, question_len, dim=1)
             sliced_a_embed_data = torch.chunk(qa_embed_data, question_len, dim=1)
@@ -125,7 +130,7 @@ class DMKT(nn.Module):
                 # this where we need to handle each question seperatedly 
                 q_read_content = self.read(q_correlation_weight)
 
-                # shoudl we concat l_read_content and ls at this point?
+                # should we concat l_read_content and ls at this point?
                 mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
                 summary_output = self.tanh(self.summary_fc(mastery_level))
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
