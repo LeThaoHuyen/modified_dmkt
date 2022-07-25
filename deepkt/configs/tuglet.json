@@ -8,7 +8,7 @@
     "gpu_device": 0,
     "seed": 1024,
   
-    "data_name": "data5",
+    "data_name": "data6",
     "min_seq_len": 2,
     "max_seq_len": 20,
     "max_subseq_len": 50,
