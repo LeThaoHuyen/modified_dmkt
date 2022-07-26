@@ -12,8 +12,8 @@
     "min_seq_len": 2,
     "max_seq_len": 20,
     "max_subseq_len": 50,
-    "q_subseq_len": 8,
-    "l_subseq_len": 10,
+    "q_subseq_len": 50,
+    "l_subseq_len": 15,
     "stride": 50,
     "validation_split": 0.2,
     "shuffle": false,
@@ -23,9 +23,9 @@
   
     "init_std": 0.2,
     "num_concepts": 12,
-    "key_dim": 50,
-    "value_dim": 50,
-    "summary_dim": 50,
+    "key_dim": 10,
+    "value_dim": 10,
+    "summary_dim": 10,
   
     "optimizer": "adam",
     "learning_rate": 0.01,
@@ -35,7 +35,7 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "max_epoch": 15,
+    "max_epoch": 10,
   
     "log_interval": 10,
     "validate_every": 1,
