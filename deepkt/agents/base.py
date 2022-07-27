@@ -54,7 +54,8 @@ class BaseAgent:
         self.best_train_loss = None
         self.best_val_perf = None
         self.metric = config.metric
-        self.save = self.save_checkpoint
+        #self.save = self.save_checkpoint
+        self.save = True
         if self.metric == "rmse":
             self.best_val_perf = 1.
         elif self.metric == "auc":
@@ -96,6 +97,7 @@ class BaseAgent:
             the best so far
         :return:
         """
+        print("Hello")
         state = {
             'epoch': self.current_epoch,
             'iteration': self.current_iteration,

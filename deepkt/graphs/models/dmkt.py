@@ -58,7 +58,7 @@ class DMKT(nn.Module):
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
         self.summary_fc = nn.Linear(2 * self.key_dim + 2 * self.value_dim, self.summary_dim)
-        # self.summary_fc = nn.Linear(self.key_dim + self.value_dim, self.summary_dim)
+        self.summary_fc2 = nn.Linear(self.key_dim + self.value_dim, self.summary_dim)
         self.linear_out = nn.Linear(self.summary_dim, 1)
 
         # initialize the activate functions
@@ -130,9 +130,13 @@ class DMKT(nn.Module):
                 # this where we need to handle each question seperatedly 
                 q_read_content = self.read(q_correlation_weight)
 
-                # should we concat l_read_content and ls at this point?
-                mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
-                summary_output = self.tanh(self.summary_fc(mastery_level))
+                if j == 0:
+                    mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
+                    summary_output = self.tanh(self.summary_fc(mastery_level))
+                else:
+                    mastery_level = torch.cat([q_read_content, q], dim=1)
+                    summary_output = self.tanh(self.summary_fc2(mastery_level))
+                    
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sub_pred)
 
