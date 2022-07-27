@@ -19,11 +19,12 @@ class DKVMN_ExtDataset(Dataset):
         self.min_seq_len = min_seq_len
         self.q_subseq_len = q_subseq_len
         self.num_items = num_items
-        if stride is not None and train:
-            self.stride = stride
-        else:
-            # because we pad 0 at the first element
-            self.stride = max_seq_len - 1
+        # if stride is not None and train:
+        #     self.stride = stride
+        # else:
+        #     # because we pad 0 at the first element
+        #     self.stride = max_seq_len - 1
+        self.stride = max_seq_len - 1
         self.metric = metric
 
         self.q_data, self.a_data, self.l_data = self._transform(
@@ -80,52 +81,56 @@ class DKVMN_ExtDataset(Dataset):
 
         return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
 
-    # def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
-    #     """
-    #     transform the data into feasible input of model,
-    #     truncate the seq. if it is too long and
-    #     pad the seq. with 0s if it is too short
-    #     """
-    #     if l_records is not None and max_subseq_len is not None:
-    #         assert len(q_records) == len(a_records) == len(l_records)
-    #         l_data = []
-    #         lec_sliding = SlidingWindow(self.max_seq_len, self.stride,
-    #                                     fillvalue=[0] * max_subseq_len)
-    #         padding = Padding(max_subseq_len, side='left', fillvalue=0)
-    #     else:
-    #         assert len(q_records) == len(a_records)
+    def _transform(self, q_records, a_records, l_records, q_subseq_len, l_subseq_len):
+        """
+        transform the data into feasible input of model,
+        truncate the seq. if it is too long and
+        pad the seq. with 0s if it is too short
+        """
+        if l_records is not None and l_subseq_len is not None:
+            assert len(q_records) == len(a_records) == len(l_records)
+            l_data = []
+            lec_sliding = SlidingWindow(self.max_seq_len, self.stride,
+                                        fillvalue=[0] * l_subseq_len)
+            l_padding = Padding(l_subseq_len, side='left', fillvalue=0)
+        else:
+            assert len(q_records) == len(a_records)
 
-    #     q_data = []
-    #     a_data = []
-    #     # if seq length is less than max_seq_len, the sliding will pad it with fillvalue
-    #     # the reason of inserting the first attempt with 0 and setting stride=self.max_seq_len-1
-    #     # is to make sure every test point will be evaluated if a model cannot test the first
-    #     # attempt
-    #     sliding = SlidingWindow(self.max_seq_len, self.stride, fillvalue=0)
-    #     for index in range(len(q_records)):
-    #         q_list = q_records[index]
-    #         a_list = a_records[index]
-    #         q_list.insert(0, 0)
-    #         a_list.insert(0, 0)
-    #         assert len(q_list) == len(a_list)
-    #         sample = {"q": q_list, "a": a_list}
-    #         output = sliding(sample)
-    #         q_data.extend(output["q"])
-    #         a_data.extend(output["a"])
-    #         if l_records is not None:
-    #             l_list = l_records[index]
-    #             l_list = [padding({"l": l[-max_subseq_len:]})["l"] for l in l_list]
-    #             l_list.insert(0, [0] * max_subseq_len)
-    #             assert len(q_list) == len(a_list) #== len(l_list)
-    #             sample = {"l": l_list}
-    #             lec_output = lec_sliding(sample)
-    #             l_data.extend(lec_output["l"])
-    #             assert len(q_data) == len(a_data) #== len(l_data)
+        q_data = []
+        a_data = []
+        # if seq length is less than max_seq_len, the sliding will pad it with fillvalue
+        # the reason of inserting the first attempt with 0 and setting stride=self.max_seq_len-1
+        # is to make sure every test point will be evaluated if a model cannot test the first
+        # attempt
+        q_sliding = SlidingWindow(self.max_seq_len, self.stride, fillvalue=[0] * q_subseq_len)
+        q_padding = Padding(q_subseq_len, side='left', fillvalue=0)
+        for index in range(len(q_records)):
+            q_list = q_records[index]
+            a_list = a_records[index]
+            q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
+            a_list = [q_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
+            q_list.insert(0, [0] * q_subseq_len)
+            a_list.insert(0, [0] * q_subseq_len)
+            assert len(q_list) == len(a_list)
+            sample = {"q": q_list, "a": a_list}
+            output = q_sliding(sample)
+            q_data.extend(output["q"])
+            a_data.extend(output["a"])
 
-    #     if l_records is not None:
-    #         return np.array(q_data), np.array(a_data), np.array(l_data)
-    #     else:
-    #         return np.array(q_data), np.array(a_data)
+            if l_records is not None:
+                l_list = l_records[index]
+                l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
+                l_list.insert(0, [0] * l_subseq_len)
+                assert len(q_list) == len(a_list) #== len(l_list)
+                sample = {"l": l_list}
+                lec_output = lec_sliding(sample)
+                l_data.extend(lec_output["l"])
+                assert len(q_data) == len(a_data) #== len(l_data)
+
+        if l_records is not None:
+            return np.array(q_data), np.array(a_data), np.array(l_data)
+        else:
+            return np.array(q_data), np.array(a_data)
 
 
     # def _transform(self, q_records, a_records, l_records=None, max_subseq_len=None):
@@ -160,41 +165,41 @@ class DKVMN_ExtDataset(Dataset):
     #     return np.array(q_data), np.array(a_data), np.array(l_data)
 
 
-    def _transform(self, q_records, a_records, l_records, q_subseq_len, l_subseq_len):
-        q_data = []
-        a_data = []
-        l_data = []
+    # def _transform(self, q_records, a_records, l_records, q_subseq_len, l_subseq_len):
+    #     q_data = []
+    #     a_data = []
+    #     l_data = []
 
-        for q_list, a_list, l_list in zip(q_records, a_records, l_records):
-            assert len(q_list) == len(a_list)
+    #     for q_list, a_list, l_list in zip(q_records, a_records, l_records):
+    #         assert len(q_list) == len(a_list)
             
-            if len(q_list) >= self.max_seq_len:
-                q_list = q_list[-self.max_seq_len:]
-                a_list = a_list[-self.max_seq_len:]
-            else:
-                q_list.extend([[0] for _ in range (self.max_seq_len - len(q_list))])
-                a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
+    #         if len(q_list) >= self.max_seq_len:
+    #             q_list = q_list[-self.max_seq_len:]
+    #             a_list = a_list[-self.max_seq_len:]
+    #         else:
+    #             q_list.extend([[0] for _ in range (self.max_seq_len - len(q_list))])
+    #             a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
             
-            assert len(q_list) == len(a_list)
+    #         assert len(q_list) == len(a_list)
 
-            if len(l_list) >= self.max_seq_len:
-                l_list = l_list[-self.max_seq_len:]
-            else:
-                l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
+    #         if len(l_list) >= self.max_seq_len:
+    #             l_list = l_list[-self.max_seq_len:]
+    #         else:
+    #             l_list.extend([[0] for _ in range (self.max_seq_len - len(l_list))])
 
-            #padding = Padding(max_subseq_len, side='left', fillvalue=0)
-            q_padding = Padding(q_subseq_len, side='left', fillvalue=0)
-            l_padding = Padding(l_subseq_len, side='left', fillvalue=0)
+    #         #padding = Padding(max_subseq_len, side='left', fillvalue=0)
+    #         q_padding = Padding(q_subseq_len, side='left', fillvalue=0)
+    #         l_padding = Padding(l_subseq_len, side='left', fillvalue=0)
 
-            q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
-            a_list = [q_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
-            l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
+    #         q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
+    #         a_list = [q_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
+    #         l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
 
-            assert len(q_list) == len(a_list) == len(l_list) 
+    #         assert len(q_list) == len(a_list) == len(l_list) 
 
-            q_data.append(q_list)
-            a_data.append(a_list)
-            l_data.append(l_list)
+    #         q_data.append(q_list)
+    #         a_data.append(a_list)
+    #         l_data.append(l_list)
 
 
-        return np.array(q_data), np.array(a_data), np.array(l_data)
+    #     return np.array(q_data), np.array(a_data), np.array(l_data)

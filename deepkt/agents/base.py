@@ -129,8 +129,10 @@ class BaseAgent:
             perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
             prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
             pr_auc = metrics.auc(rec, prec)
+            f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
+            self.logger.info('F1: {:.05}'.format(f1))
             if perf > self.best_val_perf:
                 self.best_val_perf = perf
                 self.best_train_loss = self.train_loss.item()

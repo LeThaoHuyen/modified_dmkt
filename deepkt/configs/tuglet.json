@@ -8,13 +8,14 @@
     "gpu_device": 0,
     "seed": 1024,
   
-    "data_name": "data4",
+    "data_name": "data5",
     "min_seq_len": 2,
     "max_seq_len": 20,
-    "max_subseq_len": 50,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
     "stride": 50,
+
+    "max_subseq_len": 50,
     "validation_split": 0.2,
     "shuffle": false,
     "num_workers": 8,
