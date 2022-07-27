@@ -13,7 +13,7 @@
     "max_seq_len": 20,
     "max_subseq_len": 50,
     "q_subseq_len": 50,
-    "l_subseq_len": 15,
+    "l_subseq_len": 10,
     "stride": 50,
     "validation_split": 0.2,
     "shuffle": false,

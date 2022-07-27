@@ -75,6 +75,7 @@ class BaseAgent:
         """
         filename = self.config.checkpoint_dir + file_name
         try:
+            self.logger.info(self.config)
             self.logger.info("Loading checkpoint '{}'".format(filename))
             checkpoint = torch.load(filename)
             self.current_epoch = checkpoint['epoch']
