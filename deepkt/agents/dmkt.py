@@ -12,7 +12,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from sklearn import metrics
 import sys
-
+import matplotlib.pyplot as plt
 from deepkt.agents.base import BaseAgent
 from deepkt.graphs.models.dmkt import DMKT
 
@@ -112,6 +112,16 @@ class DMKTAgent(BaseAgent):
             if self.early_stopping():
                 break
 
+        epochs = range(1, self.config.max_epoch + 1)
+
+        plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
+        plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
+        plt.title('Training and Validation loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
     def train_one_epoch(self):
         """
         One epoch of training
@@ -149,6 +159,7 @@ class DMKTAgent(BaseAgent):
             self.current_iteration += 1
         # used for ReduceLROnPlateau
         self.train_loss = self.train_loss / train_elements
+        self.train_loss_list.append(self.train_loss)
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
 
@@ -163,6 +174,7 @@ class DMKTAgent(BaseAgent):
         else:
             self.logger.info("Test Result at Epoch: {}".format(self.current_epoch))
         test_loss = 0
+        test_elements = 0
         pred_labels = []
         true_labels = []
         with torch.no_grad():
@@ -174,13 +186,23 @@ class DMKTAgent(BaseAgent):
                 target_answers = target_answers.to(self.device)
                 target_mask = target_mask.to(self.device)
                 output = self.model(questions, interactions, lec_interactions_list)
-                output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
-                label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
-                # output = torch.masked_select(output, target_mask)
-                # label = torch.masked_select(target_answers, target_mask)
+                # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
+                # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
+                # test_elements += target_mask[:, 1:].int().sum()
+                output = torch.masked_select(output, target_mask)
+                label = torch.masked_select(target_answers, target_mask)
+                test_elements += target_mask.int().sum()
                 test_loss += self.criterion(output.float(), label.float()).item()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
+
+                # print(pred_labels)
+                # print(output)
                 # print(list(zip(true_labels, pred_labels)))
+                # print(true_labels)
+                # print(pred_labels)
+        test_loss = test_loss/test_elements
+        self.logger.info("Test Loss: {:.6f}".format(test_loss))
+        self.test_loss_list.append(test_loss)
         self.track_best(true_labels, pred_labels)
 

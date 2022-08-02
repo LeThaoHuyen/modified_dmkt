@@ -11,7 +11,7 @@ import torch.nn as nn
 
 from tensorboardX.writer import SummaryWriter
 from deepkt.utils.metrics import AverageMeter, AverageMeterList
-
+import matplotlib.pyplot as plt
 
 class BaseAgent:
     """
@@ -51,11 +51,12 @@ class BaseAgent:
         self.best_epoch = None
         self.train_loss = None
         self.train_loss_list = []
+        self.test_loss_list = []
         self.best_train_loss = None
         self.best_val_perf = None
         self.metric = config.metric
         #self.save = self.save_checkpoint
-        self.save = True
+        self.save = config.save_checkpoint
         if self.metric == "rmse":
             self.best_val_perf = 1.
         elif self.metric == "auc":
@@ -132,12 +133,30 @@ class BaseAgent:
             perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
             prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
             pr_auc = metrics.auc(rec, prec)
+            f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
+            accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
+            self.logger.info('Accuracy: {:.05}'.format(accuracy))
+            self.logger.info('F1: {:.05}'.format(f1))
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
-            if perf > self.best_val_perf:
-                self.best_val_perf = perf
-                self.best_train_loss = self.train_loss.item()
-                self.best_epoch = self.current_epoch
+
+            print(metrics.confusion_matrix(self.true_labels, self.pred_labels > 0.5))
+
+            # fpr, tpr, threshold = metrics.roc_curve(self.true_labels, self.pred_labels)
+            # print(threshold)
+            # plt.plot(fpr, tpr)
+            # plt.ylabel('True Positive Rate')
+            # plt.xlabel('False Positive Rate')
+            # plt.show()
+
+            # plt.plot(rec, prec)
+            # plt.ylabel('Precision')
+            # plt.xlabel('Recall')
+            # plt.show()
+            # if perf > self.best_val_perf:
+            #     self.best_val_perf = perf
+            #     self.best_train_loss = self.train_loss.item()
+            #     self.best_epoch = self.current_epoch
         else:
             raise AttributeError
 

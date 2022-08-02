@@ -50,10 +50,10 @@ class DMKT(nn.Module):
         #                                         embedding_dim=self.value_dim,
         #                                         padding_idx=0)
         # self.qa_embed_matrix = nn.Linear(2, self.value_dim)
-        
-        self.q_embed_matrix = nn.Linear(8, self.key_dim)
-        self.l_embed_matrix = nn.Linear(8, self.value_dim)
-        self.qa_embed_matrix = nn.Linear(9, self.value_dim)
+
+        self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
+        self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
+        self.qa_embed_matrix = nn.Linear(config.input_dim + 1, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -73,6 +73,8 @@ class DMKT(nn.Module):
         qa_data: batch_size, seq_len, a_subseq_len, 9
         l_data: batch_size, seq_len, na_subseq_len, 9
         """
+
+        # print(q_data[0][0])
         if self.metric == 'rmse':
             qa_data = qa_data.float()
         q_data = q_data.float()
@@ -136,7 +138,10 @@ class DMKT(nn.Module):
                 else:
                     mastery_level = torch.cat([q_read_content, q], dim=1)
                     summary_output = self.tanh(self.summary_fc2(mastery_level))
-                    
+
+                # mastery_level = torch.cat([q_read_content, q], dim=1)
+                # summary_output = self.tanh(self.summary_fc2(mastery_level))
+
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sub_pred)
 

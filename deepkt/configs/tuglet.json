@@ -6,26 +6,30 @@
   
     "cuda": true,
     "gpu_device": 0,
-    "seed": 1024,
+    "seed": 301,
   
-    "data_name": "data7",
+    "data_name": "data6_original",
     "min_seq_len": 2,
-    "max_seq_len": 20,
-    "max_subseq_len": 50,
-    "q_subseq_len": 50,
+
+    "max_seq_len": 50,
+    "q_subseq_len": 8,
     "l_subseq_len": 10,
+
     "stride": 50,
     "validation_split": 0.2,
-    "shuffle": false,
+    "shuffle": true,
     "num_workers": 8,
     "batch_size": 32,
     "test_batch_size": 1024,
+    "max_subseq_len": 50,
+
+    "input_dim":8,
   
     "init_std": 0.2,
     "num_concepts": 12,
-    "key_dim": 4,
-    "value_dim": 4,
-    "summary_dim": 4,
+    "key_dim": 50,
+    "value_dim": 50,
+    "summary_dim": 50,
   
     "optimizer": "adam",
     "learning_rate": 0.01,
@@ -35,7 +39,8 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "max_epoch": 7,
+    "max_epoch": 8,
+    "save_checkpoint": true,
   
     "log_interval": 10,
     "validate_every": 1,
