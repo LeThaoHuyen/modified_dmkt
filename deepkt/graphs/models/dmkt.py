@@ -69,6 +69,8 @@ class DMKT(nn.Module):
         qa_data: batch_size, seq_len, a_subseq_len
         l_data: batch_size, seq_len, na_subseq_len
         """
+        print(self.value_matrix)
+        
         if self.metric == 'rmse':
             qa_data = qa_data.float()
         batch_size, seq_len = l_data.size(0), l_data.size(1)
