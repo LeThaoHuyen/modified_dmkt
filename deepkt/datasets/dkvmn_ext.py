@@ -19,11 +19,12 @@ class DKVMN_ExtDataset(Dataset):
         self.min_seq_len = min_seq_len
         self.q_subseq_len = q_subseq_len
         self.num_items = num_items
-        if stride is not None and train:
-            self.stride = stride
-        else:
-            # because we pad 0 at the first element
-            self.stride = max_seq_len - 1
+        # if stride is not None and train:
+        #     self.stride = stride
+        # else:
+        #     # because we pad 0 at the first element
+        #     self.stride = max_seq_len - 1
+        self.stride = max_seq_len - 1
         self.metric = metric
 
         self.q_data, self.a_data, self.l_data = self._transform(

@@ -148,9 +148,9 @@ class DMKTAgent(BaseAgent):
             # print("output: {}".format(output))
             output = torch.masked_select(output, target_mask)
             loss = self.criterion(output.float(), label.float())
-            # should use reduction="mean" not "sum", otherwise, performance drops significantly
-            self.train_loss += loss.item()
-            train_elements += target_mask.int().sum()
+            # # should use reduction="mean" not "sum", otherwise, performance drops significantly
+            # self.train_loss += loss.item()
+            # train_elements += target_mask.int().sum()
             loss.backward()  # compute the gradient
 
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
@@ -158,7 +158,7 @@ class DMKTAgent(BaseAgent):
             # self.scheduler.step()  # for CycleLR Scheduler or MultiStepLR
             self.current_iteration += 1
         # used for ReduceLROnPlateau
-        self.train_loss = self.train_loss / train_elements
+        # self.train_loss = self.train_loss / train_elements
         self.train_loss_list.append(self.train_loss)
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
@@ -178,17 +178,31 @@ class DMKTAgent(BaseAgent):
         pred_labels = []
         true_labels = []
         with torch.no_grad():
-            for data in self.data_loader.test_loader:
+            count = 0
+            for data in self.data_loader.test_loader: # batch_size = data --> this iteration runs only once
                 interactions, lec_interactions_list, questions, target_answers, target_mask = data
+                print(count)
+                count += 1
+            #     print(target_mask)
+                # print(questions[0][0])
+                # interactions = torch.Tensor([[[[0, 0, 1, 0, 1, 0,1, 0, 1], [0, 0, 1, 0, 0, 0, 0.5, 0, 1]]]])
+                # lec_interactions_list = torch.Tensor([[[[0,0,1,0,0,0.5,0,0]]]])
+                # questions = torch.Tensor([[[[0, 0, 1, 0, 1, 0,1, 0],  [0, 0, 1, 0, 0, 0, 0.5, 0]]]])
+                # target_answers = torch.Tensor([[1, 1]])
+                # target_mask = torch.tensor([[True, True]])
+
                 interactions = interactions.to(self.device)
                 lec_interactions_list = lec_interactions_list.to(self.device)
                 questions = questions.to(self.device)
                 target_answers = target_answers.to(self.device)
                 target_mask = target_mask.to(self.device)
+
                 output = self.model(questions, interactions, lec_interactions_list)
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
+                print(output)
+
                 output = torch.masked_select(output, target_mask)
                 label = torch.masked_select(target_answers, target_mask)
                 test_elements += target_mask.int().sum()
@@ -199,8 +213,8 @@ class DMKTAgent(BaseAgent):
                 # print(pred_labels)
                 # print(output)
                 # print(list(zip(true_labels, pred_labels)))
-                # print(true_labels)
-                # print(pred_labels)
+        print(true_labels[:15])
+        print(pred_labels[:15])        
         test_loss = test_loss/test_elements
         self.logger.info("Test Loss: {:.6f}".format(test_loss))
         self.test_loss_list.append(test_loss)

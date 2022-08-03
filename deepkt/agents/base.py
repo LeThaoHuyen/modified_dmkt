@@ -130,15 +130,15 @@ class BaseAgent:
                 self.best_train_loss = self.train_loss.item()
                 self.best_epoch = self.current_epoch
         elif self.metric == "auc":
-            perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
-            prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
-            pr_auc = metrics.auc(rec, prec)
+            # perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
+            # prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
+            # pr_auc = metrics.auc(rec, prec)
             f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
             accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
             self.logger.info('Accuracy: {:.05}'.format(accuracy))
             self.logger.info('F1: {:.05}'.format(f1))
-            self.logger.info('ROC-AUC: {:.05}'.format(perf))
-            self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
+            # self.logger.info('ROC-AUC: {:.05}'.format(perf))
+            # self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
 
             print(metrics.confusion_matrix(self.true_labels, self.pred_labels > 0.5))
 
