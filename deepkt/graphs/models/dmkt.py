@@ -52,7 +52,7 @@ class DMKT(nn.Module):
         # self.qa_embed_matrix = nn.Linear(2, self.value_dim)
 
         self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
-        self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
+        # self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
         self.qa_embed_matrix = nn.Linear(config.input_dim + 1, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -108,7 +108,7 @@ class DMKT(nn.Module):
             # q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
             q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1))
             qa_embed_data = self.qa_embed_matrix(sliced_qa_data[i].squeeze(1))
-            l_embed_data = self.l_embed_matrix(sliced_l_data[i].squeeze(1))
+            l_embed_data = self.q_embed_matrix(sliced_l_data[i].squeeze(1))
 
             sliced_q_embed_data = torch.chunk(q_embed_data, question_len, dim=1)
             sliced_a_embed_data = torch.chunk(qa_embed_data, question_len, dim=1)
