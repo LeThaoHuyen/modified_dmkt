@@ -98,7 +98,14 @@ class DMKTAgent(BaseAgent):
 
         # Model Loading from the latest checkpoint if not found start from scratch.
         # this loading should be after checking cuda
+        
+        print("Initial weight: ---------")
+        print(self.model.key_matrix)
+
         self.load_checkpoint(self.config.checkpoint_file)
+
+        print("Loaded weight:-----")
+        print(self.model.key_matrix)
 
     def train(self):
         """
@@ -114,19 +121,29 @@ class DMKTAgent(BaseAgent):
 
         epochs = range(1, self.config.max_epoch + 1)
 
-        plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
-        plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
-        plt.title('Training and Validation loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
+        # plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
+        # plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
+        # plt.title('Training and Validation loss')
+        # plt.xlabel('Epochs')
+        # plt.ylabel('Loss')
+        # plt.legend()
+        # plt.show()
 
     def train_one_epoch(self):
         """
         One epoch of training
         :return:
         """
+
+        # print(self.model.key_matrix.requires_grad)
+       
+        # for param in self.model.parameters():
+        #     param.requires_grad= True
+        print(self.model.key_matrix.requires_grad)
+        print("This is key matrix before", self.model.key_matrix)
+        # print(self.model.q_embed_matrix.weight.requires_grad)
+        # print(self.model.q_embed_matrix.weight)
+
         self.model.train()
         self.logger.info("\n")
         self.logger.info("Train Epoch: {}".format(self.current_epoch))
@@ -149,16 +166,22 @@ class DMKTAgent(BaseAgent):
             output = torch.masked_select(output, target_mask)
             loss = self.criterion(output.float(), label.float())
             # # should use reduction="mean" not "sum", otherwise, performance drops significantly
-            # self.train_loss += loss.item()
-            # train_elements += target_mask.int().sum()
+            self.train_loss += loss.item()
+            train_elements += target_mask.int().sum()
             loss.backward()  # compute the gradient
 
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
             self.optimizer.step()  # update the weight
             # self.scheduler.step()  # for CycleLR Scheduler or MultiStepLR
             self.current_iteration += 1
+
+
+            # print(self.model.q_embed_matrix.weight)
+        print("This is key matrix after", self.model.key_matrix)
+        print(self.model.key_matrix.requires_grad)
+
         # used for ReduceLROnPlateau
-        # self.train_loss = self.train_loss / train_elements
+        self.train_loss = self.train_loss / train_elements
         self.train_loss_list.append(self.train_loss)
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
@@ -169,6 +192,7 @@ class DMKTAgent(BaseAgent):
         :return:
         """
         self.model.eval()
+        print("Key matrix at validation:", self.model.key_matrix)
         if self.mode == "train":
             self.logger.info("Validation Result at Epoch: {}".format(self.current_epoch))
         else:
@@ -178,11 +202,9 @@ class DMKTAgent(BaseAgent):
         pred_labels = []
         true_labels = []
         with torch.no_grad():
-            count = 0
             for data in self.data_loader.test_loader: # batch_size = data --> this iteration runs only once
                 interactions, lec_interactions_list, questions, target_answers, target_mask = data
-                print(count)
-                count += 1
+    
             #     print(target_mask)
                 # print(questions[0][0])
                 # interactions = torch.Tensor([[[[0, 0, 1, 0, 1, 0,1, 0, 1], [0, 0, 1, 0, 0, 0, 0.5, 0, 1]]]])
@@ -201,7 +223,7 @@ class DMKTAgent(BaseAgent):
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
-                print(output)
+                #print(output)
 
                 output = torch.masked_select(output, target_mask)
                 label = torch.masked_select(target_answers, target_mask)
@@ -213,8 +235,8 @@ class DMKTAgent(BaseAgent):
                 # print(pred_labels)
                 # print(output)
                 # print(list(zip(true_labels, pred_labels)))
-        print(true_labels[:15])
-        print(pred_labels[:15])        
+        # print(true_labels[:15])
+        # print(pred_labels[:15])        
         test_loss = test_loss/test_elements
         self.logger.info("Test Loss: {:.6f}".format(test_loss))
         self.test_loss_list.append(test_loss)

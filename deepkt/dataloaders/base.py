@@ -67,26 +67,6 @@ class BaseDataLoader:
                                                    stride=self.stride,
                                                    train=True,
                                                    metric=self.metric)
-            elif self.agent == "DKT_ExtAgent":
-                self.train_data = DKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-                                                 self.max_seq_len,
-                                                 min_seq_len=self.min_seq_len,
-                                                 max_subseq_len=self.max_subseq_len,
-                                                 stride=self.stride,
-                                                 train=True,
-                                                 metric=self.metric)
-
-            elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
-                self.train_data = SAKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-                                                  self.max_seq_len,
-                                                  min_seq_len=self.min_seq_len,
-                                                  max_subseq_len=self.max_subseq_len,
-                                                  stride=self.stride,
-                                                  train=True,
-                                                  metric=self.metric)
-            else:
-                self.train_data = MLP_ExtDataset(q_records, a_records, l_records,
-                                                 self.max_subseq_len)
             if self.mode == "train":
                 self.init_kwargs["dataset"] = self.train_data
                 n_samples = len(self.train_data)
@@ -119,28 +99,28 @@ class BaseDataLoader:
                                                       stride=self.stride,
                                                       train=False,
                                                       metric=self.metric)
-                elif self.agent == "DKT_ExtAgent":
-                    self.test_data = DKT_ExtDataset(q_records, a_records, l_records,
-                                                    self.num_items,
-                                                    self.max_seq_len,
-                                                    min_seq_len=self.min_seq_len,
-                                                    max_subseq_len=self.max_subseq_len,
-                                                    stride=self.stride,
-                                                    train=False,
-                                                    metric=self.metric)
+                # elif self.agent == "DKT_ExtAgent":
+                #     self.test_data = DKT_ExtDataset(q_records, a_records, l_records,
+                #                                     self.num_items,
+                #                                     self.max_seq_len,
+                #                                     min_seq_len=self.min_seq_len,
+                #                                     max_subseq_len=self.max_subseq_len,
+                #                                     stride=self.stride,
+                #                                     train=False,
+                #                                     metric=self.metric)
 
-                elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
-                    self.test_data = SAKT_ExtDataset(q_records, a_records, l_records,
-                                                     self.num_items,
-                                                     self.max_seq_len,
-                                                     min_seq_len=self.min_seq_len,
-                                                     max_subseq_len=self.max_subseq_len,
-                                                     stride=self.stride,
-                                                     train=False,
-                                                     metric=self.metric)
-                else:
-                    self.test_data = MLP_ExtDataset(q_records, a_records, l_records,
-                                                    self.max_subseq_len)
+                # elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
+                #     self.test_data = SAKT_ExtDataset(q_records, a_records, l_records,
+                #                                      self.num_items,
+                #                                      self.max_seq_len,
+                #                                      min_seq_len=self.min_seq_len,
+                #                                      max_subseq_len=self.max_subseq_len,
+                #                                      stride=self.stride,
+                #                                      train=False,
+                #                                      metric=self.metric)
+                # else:
+                #     self.test_data = MLP_ExtDataset(q_records, a_records, l_records,
+                #                                     self.max_subseq_len)
                 self.init_kwargs["batch_size"] = len(self.test_data)
                 self.test_loader = DataLoader(self.test_data, **self.init_kwargs)
             # elif self.mode == "predict":
@@ -149,81 +129,81 @@ class BaseDataLoader:
                 raise AttributeError
 
         # agents that support gradable learning materials
-        elif self.agent in ["DKTAgent", "AKTAgent", "SAKTAgent", "SAINTAgent",
-                            "DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
-                            "DKVMN_Distill_IRTAgent"]:
-            q_records = data["train"]["q_data"]
-            a_records = data["train"]["a_data"]
-            if self.agent == "DKTAgent":
-                self.train_data = DKTDataset(q_records, a_records, self.num_items,
-                                             self.max_seq_len,
-                                             min_seq_len=self.min_seq_len,
-                                             stride=self.stride,
-                                             train=True,
-                                             metric=self.metric)
-            elif self.agent in ["DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
-                                "DKVMN_Distill_IRTAgent"]:
-                self.train_data = DKVMNDataset(q_records, a_records, self.num_items,
-                                               self.max_seq_len,
-                                               min_seq_len=self.min_seq_len,
-                                               stride=self.stride,
-                                               train=True,
-                                               metric=self.metric)
-            elif self.agent in ["AKTAgent", "SAKTAgent", "SAINTAgent"]:
-                self.train_data = SAKTDataset(q_records, a_records, self.num_items,
-                                              self.max_seq_len,
-                                              min_seq_len=self.min_seq_len,
-                                              stride=self.stride,
-                                              train=True,
-                                              metric=self.metric)
-            if self.mode == "train":
-                self.init_kwargs["dataset"] = self.train_data
-                n_samples = len(self.train_data)
-                # split the train data into train and val sets based on the self.n_samples
-                train_sampler, valid_sampler = self._split_sampler(n_samples, self.validation_split,
-                                                                   self.seed)
-                # turn off shuffle option which is mutually exclusive with sampler
-                self.init_kwargs["shuffle"] = False
-                # create the training loader
-                self.train_loader = DataLoader(sampler=train_sampler, **self.init_kwargs)
-                # create the validation that only do eval, so we set large batch size
-                self.init_kwargs["batch_size"] = len(valid_sampler)
-                self.test_loader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
-            elif self.mode in ["test", "predict"]:
-                # if it is in test mode, we still need to train the model.
-                # However, we combine train set and val set for training
-                self.train_loader = DataLoader(self.train_data, **self.init_kwargs)
+        # elif self.agent in ["DKTAgent", "AKTAgent", "SAKTAgent", "SAINTAgent",
+        #                     "DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
+        #                     "DKVMN_Distill_IRTAgent"]:
+        #     q_records = data["train"]["q_data"]
+        #     a_records = data["train"]["a_data"]
+        #     if self.agent == "DKTAgent":
+        #         self.train_data = DKTDataset(q_records, a_records, self.num_items,
+        #                                      self.max_seq_len,
+        #                                      min_seq_len=self.min_seq_len,
+        #                                      stride=self.stride,
+        #                                      train=True,
+        #                                      metric=self.metric)
+        #     elif self.agent in ["DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
+        #                         "DKVMN_Distill_IRTAgent"]:
+        #         self.train_data = DKVMNDataset(q_records, a_records, self.num_items,
+        #                                        self.max_seq_len,
+        #                                        min_seq_len=self.min_seq_len,
+        #                                        stride=self.stride,
+        #                                        train=True,
+        #                                        metric=self.metric)
+        #     elif self.agent in ["AKTAgent", "SAKTAgent", "SAINTAgent"]:
+        #         self.train_data = SAKTDataset(q_records, a_records, self.num_items,
+        #                                       self.max_seq_len,
+        #                                       min_seq_len=self.min_seq_len,
+        #                                       stride=self.stride,
+        #                                       train=True,
+        #                                       metric=self.metric)
+        #     if self.mode == "train":
+        #         self.init_kwargs["dataset"] = self.train_data
+        #         n_samples = len(self.train_data)
+        #         # split the train data into train and val sets based on the self.n_samples
+        #         train_sampler, valid_sampler = self._split_sampler(n_samples, self.validation_split,
+        #                                                            self.seed)
+        #         # turn off shuffle option which is mutually exclusive with sampler
+        #         self.init_kwargs["shuffle"] = False
+        #         # create the training loader
+        #         self.train_loader = DataLoader(sampler=train_sampler, **self.init_kwargs)
+        #         # create the validation that only do eval, so we set large batch size
+        #         self.init_kwargs["batch_size"] = len(valid_sampler)
+        #         self.test_loader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
+        #     elif self.mode in ["test", "predict"]:
+        #         # if it is in test mode, we still need to train the model.
+        #         # However, we combine train set and val set for training
+        #         self.train_loader = DataLoader(self.train_data, **self.init_kwargs)
 
-                q_records = data["test"]["q_data"]
-                a_records = data["test"]["a_data"]
-                if self.agent == "DKTAgent":
-                    self.test_data = DKTDataset(q_records, a_records, self.num_items,
-                                                self.max_seq_len,
-                                                min_seq_len=self.min_seq_len,
-                                                stride=self.stride,
-                                                train=False,
-                                                metric=self.metric)
-                elif self.agent in ["DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
-                                    "DKVMN_Distill_IRTAgent"]:
-                    self.test_data = DKVMNDataset(q_records, a_records, self.num_items,
-                                                  self.max_seq_len,
-                                                  min_seq_len=self.min_seq_len,
-                                                  stride=self.stride,
-                                                  train=False,
-                                                  metric=self.metric)
-                elif self.agent in ["AKTAgent", "SAKTAgent", "SAINTAgent"]:
-                    self.test_data = SAKTDataset(q_records, a_records, self.num_items,
-                                                 self.max_seq_len,
-                                                 min_seq_len=self.min_seq_len,
-                                                 stride=self.stride,
-                                                 train=False,
-                                                 metric=self.metric)
-                self.init_kwargs["batch_size"] = len(self.test_data)
-                self.test_loader = DataLoader(self.test_data, **self.init_kwargs)
-            # elif self.mode == "predict":
-            #     pass
-            else:
-                raise AttributeError
+        #         q_records = data["test"]["q_data"]
+        #         a_records = data["test"]["a_data"]
+        #         if self.agent == "DKTAgent":
+        #             self.test_data = DKTDataset(q_records, a_records, self.num_items,
+        #                                         self.max_seq_len,
+        #                                         min_seq_len=self.min_seq_len,
+        #                                         stride=self.stride,
+        #                                         train=False,
+        #                                         metric=self.metric)
+        #         elif self.agent in ["DKVMNAgent", "DKVMN_IRTAgent", "DKVMN_IRT_PlusAgent",
+        #                             "DKVMN_Distill_IRTAgent"]:
+        #             self.test_data = DKVMNDataset(q_records, a_records, self.num_items,
+        #                                           self.max_seq_len,
+        #                                           min_seq_len=self.min_seq_len,
+        #                                           stride=self.stride,
+        #                                           train=False,
+        #                                           metric=self.metric)
+        #         elif self.agent in ["AKTAgent", "SAKTAgent", "SAINTAgent"]:
+        #             self.test_data = SAKTDataset(q_records, a_records, self.num_items,
+        #                                          self.max_seq_len,
+        #                                          min_seq_len=self.min_seq_len,
+        #                                          stride=self.stride,
+        #                                          train=False,
+        #                                          metric=self.metric)
+        #         self.init_kwargs["batch_size"] = len(self.test_data)
+        #         self.test_loader = DataLoader(self.test_data, **self.init_kwargs)
+        #     # elif self.mode == "predict":
+        #     #     pass
+        #     else:
+        #         raise AttributeError
 
     def _split_sampler(self, n_samples, split, seed):
         if split == 0.0:

@@ -65,6 +65,8 @@ class DMKT(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax()
+
+        self.key_matrix.requires_grad_()
         print("Init model")
 
     def forward(self, q_data, qa_data, l_data):
@@ -76,6 +78,9 @@ class DMKT(nn.Module):
         """
 
         # print(q_data[0][0])
+        # print(self.key_matrix.requires_grad)
+        # print(self.q_embed_matrix.weight.requires_grad)
+        # print(self.q_embed_matrix.weight)
         if self.metric == 'rmse':
             qa_data = qa_data.float()
         q_data = q_data.float()
@@ -126,8 +131,7 @@ class DMKT(nn.Module):
                 q = sliced_q_embed_data[j].squeeze(1)
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
-                self.value_matrix = self.write(q_correlation_weight, qa)
-
+               
                 # q_read_content += self.read(q_correlation_weight)
                 # qs += q
                 # this where we need to handle each question seperatedly 
@@ -146,6 +150,8 @@ class DMKT(nn.Module):
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sub_pred)
 
+                
+                self.value_matrix = self.write(q_correlation_weight, qa)
             # mastery_level = torch.cat([q_read_content, qs, l_read_content, ls], dim=1)
             # summary_output = self.tanh(self.summary_fc(mastery_level))
             # batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))

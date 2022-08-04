@@ -68,7 +68,7 @@ class BaseAgent:
         else:
             self.target_train_loss = None
 
-    def load_checkpoint(self, file_name):
+    def load_checkpoint(self, file_name="checkpoint.pth.tar"):
         """
         Latest checkpoint loader
         :param file_name: name of the checkpoint file
@@ -82,6 +82,9 @@ class BaseAgent:
             self.current_epoch = checkpoint['epoch']
             self.current_iteration = checkpoint['iteration']
             self.model.load_state_dict(checkpoint['state_dict'])
+
+            print(checkpoint['state_dict'])
+
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.logger.info(f"Checkpoint loaded successfully from '{self.config.checkpoint_dir}' "
                              f"at (epoch {checkpoint['epoch']}) at (iteration "
