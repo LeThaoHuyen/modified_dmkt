@@ -111,7 +111,8 @@ class DMKTAgent(BaseAgent):
             self.current_epoch += 1
             if self.early_stopping():
                 break
-
+        
+        print("Best ROC-AUC:", self.best_val_perf)
         epochs = range(1, self.config.max_epoch + 1)
 
         plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')

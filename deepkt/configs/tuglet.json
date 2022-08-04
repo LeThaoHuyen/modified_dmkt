@@ -11,9 +11,10 @@
     "data_name": "data6_original",
     "min_seq_len": 2,
 
-    "max_seq_len": 50,
+    "max_seq_len": 20,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
+    "max_epoch": 30,
 
     "stride": 50,
     "validation_split": 0.2,
@@ -39,7 +40,6 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "max_epoch": 8,
     "save_checkpoint": true,
   
     "log_interval": 10,
