@@ -80,6 +80,7 @@ class BaseAgent:
             self.current_epoch = checkpoint['epoch']
             self.current_iteration = checkpoint['iteration']
             self.model.load_state_dict(checkpoint['state_dict'])
+            self.model.key_matrix = checkpoint['key_matrix']
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.logger.info(f"Checkpoint loaded successfully from '{self.config.checkpoint_dir}' "
                              f"at (epoch {checkpoint['epoch']}) at (iteration "
@@ -97,11 +98,13 @@ class BaseAgent:
             the best so far
         :return:
         """
+        self.logger.info("Save successfully")
         state = {
             'epoch': self.current_epoch,
             'iteration': self.current_iteration,
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
+            "key_matrix": self.model.key_matrix,
         }
         # Save the state
         torch.save(state, self.config.checkpoint_dir + file_name)
@@ -134,10 +137,10 @@ class BaseAgent:
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
             self.logger.info('F1: {:.05}'.format(f1))
-            if perf > self.best_val_perf:
-                self.best_val_perf = perf
-                self.best_train_loss = self.train_loss.item()
-                self.best_epoch = self.current_epoch
+            # if perf > self.best_val_perf:
+            #     self.best_val_perf = perf
+            #     self.best_train_loss = self.train_loss.item()
+            #     self.best_epoch = self.current_epoch
         else:
             raise AttributeError
 

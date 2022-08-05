@@ -1,7 +1,7 @@
 {
     "exp_name": "tuglet",
     "agent": "DMKTAgent",
-    "mode": "train",
+    "mode": "test",
     "metric": "auc",
   
     "cuda": true,
@@ -36,8 +36,8 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "max_epoch": 5,
-    "save_checkpoint": false,
+    "max_epoch": 20,
+    "save_checkpoint": true,
   
     "log_interval": 10,
     "validate_every": 1,

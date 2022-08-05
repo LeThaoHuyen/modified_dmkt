@@ -22,7 +22,7 @@ from deepkt.dataloaders import *
 cudnn.benchmark = True
 from deepkt.utils.misc import print_cuda_statistics
 import warnings
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore")
 
@@ -112,7 +112,6 @@ class DMKTAgent(BaseAgent):
             self.current_epoch += 1
             if self.early_stopping():
                 break
-
         print("Best ROC-AUC:", self.best_val_perf)
         epochs = range(1, self.config.max_epoch + 1)
 
@@ -128,7 +127,8 @@ class DMKTAgent(BaseAgent):
         """
         One epoch of training
         :return:
-        """
+        """ 
+        
         self.model.train()
         self.logger.info("\n")
         self.logger.info("Train Epoch: {}".format(self.current_epoch))

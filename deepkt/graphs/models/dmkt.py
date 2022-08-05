@@ -40,9 +40,9 @@ class DMKT(nn.Module):
                                            embedding_dim=self.key_dim,
                                            padding_idx=0)
 
-        # self.l_embed_matrix = nn.Embedding(num_embeddings=self.num_nongradable_items + 1,
-        #                                    embedding_dim=self.value_dim,
-        #                                    padding_idx=0)
+        self.l_embed_matrix = nn.Embedding(num_embeddings=self.num_nongradable_items + 1,
+                                           embedding_dim=self.value_dim,
+                                           padding_idx=0)
 
         if self.metric == "rmse":
             self.qa_embed_matrix = nn.Linear(2, self.value_dim)
@@ -62,6 +62,8 @@ class DMKT(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax()
+
+        print(self.key_matrix)
 
     def forward(self, q_data, qa_data, l_data):
         """
@@ -99,7 +101,7 @@ class DMKT(nn.Module):
 
             q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
             qa_embed_data = self.qa_embed_matrix(sliced_qa_data[i].squeeze(1).long())
-            l_embed_data = self.q_embed_matrix(sliced_l_data[i].squeeze(1).long())
+            l_embed_data = self.l_embed_matrix(sliced_l_data[i].squeeze(1).long())
 
             sliced_q_embed_data = torch.chunk(q_embed_data, question_len, dim=1)
             sliced_a_embed_data = torch.chunk(qa_embed_data, question_len, dim=1)
