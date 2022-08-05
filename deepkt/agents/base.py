@@ -51,10 +51,11 @@ class BaseAgent:
         self.best_epoch = None
         self.train_loss = None
         self.train_loss_list = []
+        self.test_loss_list = []
         self.best_train_loss = None
         self.best_val_perf = None
         self.metric = config.metric
-        self.save = self.save_checkpoint
+        self.save = config.save_checkpoint
         if self.metric == "rmse":
             self.best_val_perf = 1.
         elif self.metric == "auc":

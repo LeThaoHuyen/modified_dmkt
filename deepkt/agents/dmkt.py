@@ -22,6 +22,7 @@ from deepkt.dataloaders import *
 cudnn.benchmark = True
 from deepkt.utils.misc import print_cuda_statistics
 import warnings
+import matplotlib as plt
 
 warnings.filterwarnings("ignore")
 
@@ -112,6 +113,17 @@ class DMKTAgent(BaseAgent):
             if self.early_stopping():
                 break
 
+        print("Best ROC-AUC:", self.best_val_perf)
+        epochs = range(1, self.config.max_epoch + 1)
+
+        plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
+        plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
+        plt.title('Training and Validation loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
     def train_one_epoch(self):
         """
         One epoch of training
@@ -149,6 +161,7 @@ class DMKTAgent(BaseAgent):
             self.current_iteration += 1
         # used for ReduceLROnPlateau
         self.train_loss = self.train_loss / train_elements
+        self.train_loss_list.append(self.train_loss)
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
 
@@ -165,6 +178,7 @@ class DMKTAgent(BaseAgent):
         test_loss = 0
         pred_labels = []
         true_labels = []
+        test_elements = 0
         with torch.no_grad():
             for data in self.data_loader.test_loader:
                 interactions, lec_interactions_list, questions, target_answers, target_mask = data
@@ -179,8 +193,10 @@ class DMKTAgent(BaseAgent):
                 # output = torch.masked_select(output, target_mask)
                 # label = torch.masked_select(target_answers, target_mask)
                 test_loss += self.criterion(output.float(), label.float()).item()
+                test_elements += target_mask[:, 1:].int().sum()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
                 # print(list(zip(true_labels, pred_labels)))
         self.track_best(true_labels, pred_labels)
+        self.test_loss_list.append(test_loss/test_elements)
 
