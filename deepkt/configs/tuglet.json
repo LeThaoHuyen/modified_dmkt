@@ -1,20 +1,20 @@
 {
     "exp_name": "tuglet",
     "agent": "DMKTAgent",
-    "mode": "train",
+    "mode": "test",
     "metric": "auc",
   
     "cuda": true,
     "gpu_device": 0,
     "seed": 301,
   
-    "data_name": "data6_original",
+    "data_name": "data6_6",
     "min_seq_len": 2,
 
     "max_seq_len": 20,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
-    "max_epoch": 30,
+    "max_epoch": 10,
 
     "stride": 50,
     "validation_split": 0.2,
@@ -24,7 +24,7 @@
     "test_batch_size": 1024,
     "max_subseq_len": 50,
 
-    "input_dim":8,
+    "input_dim":6,
   
     "init_std": 0.2,
     "num_concepts": 12,
@@ -40,7 +40,7 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "save_checkpoint": true,
+    "save_checkpoint": false,
   
     "log_interval": 10,
     "validate_every": 1,
