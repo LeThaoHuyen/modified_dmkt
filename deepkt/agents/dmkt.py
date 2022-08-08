@@ -139,8 +139,8 @@ class DMKTAgent(BaseAgent):
        
         # for param in self.model.parameters():
         #     param.requires_grad= True
-        print(self.model.key_matrix.requires_grad)
-        print("This is key matrix before", self.model.key_matrix)
+        # print(self.model.key_matrix.requires_grad)
+        # print("This is key matrix before", self.model.key_matrix)
         # print(self.model.q_embed_matrix.weight.requires_grad)
         # print(self.model.q_embed_matrix.weight)
 
@@ -177,8 +177,8 @@ class DMKTAgent(BaseAgent):
 
 
             # print(self.model.q_embed_matrix.weight)
-        print("This is key matrix after", self.model.key_matrix)
-        print(self.model.key_matrix.requires_grad)
+        # print("This is key matrix after", self.model.key_matrix)
+        # print(self.model.key_matrix.requires_grad)
 
         # used for ReduceLROnPlateau
         self.train_loss = self.train_loss / train_elements
@@ -192,7 +192,6 @@ class DMKTAgent(BaseAgent):
         :return:
         """
         self.model.eval()
-        print("Key matrix at validation:", self.model.key_matrix)
         if self.mode == "train":
             self.logger.info("Validation Result at Epoch: {}".format(self.current_epoch))
         else:

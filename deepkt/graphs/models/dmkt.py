@@ -66,8 +66,8 @@ class DMKT(nn.Module):
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax()
 
-        self.key_matrix.requires_grad_()
-        print("Init model")
+        # self.key_matrix.requires_grad_()
+        # print("Init model")
 
     def forward(self, q_data, qa_data, l_data):
         """
@@ -111,7 +111,6 @@ class DMKT(nn.Module):
             # #nn.init.zeros_(qs)
             # nn.init.zeros_(ls)
 
-            # q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1).long())
             q_embed_data = self.q_embed_matrix(sliced_q_data[i].squeeze(1))
             qa_embed_data = self.qa_embed_matrix(sliced_qa_data[i].squeeze(1))
             l_embed_data = self.l_embed_matrix(sliced_l_data[i].squeeze(1))
@@ -131,31 +130,13 @@ class DMKT(nn.Module):
                 q = sliced_q_embed_data[j].squeeze(1)
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
-               
-                # q_read_content += self.read(q_correlation_weight)
-                # qs += q
-                # this where we need to handle each question seperatedly 
                 q_read_content = self.read(q_correlation_weight)
-
-                # if j == 0:
-                #     mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
-                #     summary_output = self.tanh(self.summary_fc(mastery_level))
-                # else:
-                #     mastery_level = torch.cat([q_read_content, q], dim=1)
-                #     summary_output = self.tanh(self.summary_fc2(mastery_level))
-
                 mastery_level = torch.cat([q_read_content, q], dim=1)
                 summary_output = self.tanh(self.summary_fc2(mastery_level))
-
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sub_pred)
-
-                
                 self.value_matrix = self.write(q_correlation_weight, qa)
-            # mastery_level = torch.cat([q_read_content, qs, l_read_content, ls], dim=1)
-            # summary_output = self.tanh(self.summary_fc(mastery_level))
-            # batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))
-            # batch_pred.append(batch_sliced_pred)
+    
 
         batch_pred = torch.cat(batch_pred, dim=1)
         return batch_pred
