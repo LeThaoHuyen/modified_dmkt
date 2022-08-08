@@ -180,13 +180,22 @@ class DMKTAgent(BaseAgent):
         true_labels = []
         with torch.no_grad():
             for data in self.data_loader.test_loader:
-                interactions, lec_interactions_list, questions, target_answers, target_mask = data
+                if self.mode == 'test-post-test':
+                    interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
+                    pt_questions = pt_questions.to(self.device)
+                else:
+                    interactions, lec_interactions_list, questions, target_answers, target_mask = data
+
                 interactions = interactions.to(self.device)
                 lec_interactions_list = lec_interactions_list.to(self.device)
                 questions = questions.to(self.device)
                 target_answers = target_answers.to(self.device)
                 target_mask = target_mask.to(self.device)
-                output = self.model(questions, interactions, lec_interactions_list)
+
+                if self.mode == 'test-post-test':
+                    output = self.model(questions, interactions, lec_interactions_list, pt_questions)
+                else:
+                    output = self.model(questions, interactions, lec_interactions_list)
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
