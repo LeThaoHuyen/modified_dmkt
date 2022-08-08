@@ -128,6 +128,7 @@ class DMKTAgent(BaseAgent):
         One epoch of training
         :return:
         """
+        # print(self.model.key_matrix)
         self.model.train()
         self.logger.info("\n")
         self.logger.info("Train Epoch: {}".format(self.current_epoch))
@@ -163,6 +164,8 @@ class DMKTAgent(BaseAgent):
         self.train_loss_list.append(self.train_loss)
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
+
+        # print(self.model.key_matrix)
 
     def validate(self):
         """

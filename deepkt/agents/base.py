@@ -155,10 +155,10 @@ class BaseAgent:
             # plt.ylabel('Precision')
             # plt.xlabel('Recall')
             # plt.show()
-            # if perf > self.best_val_perf:
-            #     self.best_val_perf = perf
-            #     self.best_train_loss = self.train_loss.item()
-            #     self.best_epoch = self.current_epoch
+            if perf > self.best_val_perf:
+                self.best_val_perf = perf
+                self.best_train_loss = self.train_loss.item()
+                self.best_epoch = self.current_epoch
         else:
             raise AttributeError
 

@@ -30,10 +30,16 @@ class DMKT(nn.Module):
         self.key_dim = config.key_dim
         self.value_dim = config.value_dim
         self.summary_dim = config.summary_dim
-        self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.value_matrix = None
+
+        self.key_matrix = nn.Parameter(torch.randn(self.num_concepts, self.key_dim))
         self.init_std = config.init_std
         nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
-        self.value_matrix = None
+
+        self.value_matrix_init = nn.Parameter(torch.randn(self.num_concepts, self.value_dim)) 
+        nn.init.normal_(self.value_matrix_init, mean=0, std=self.init_std)
+        
 
         # initialize the layers
         # self.q_embed_matrix = nn.Embedding(num_embeddings=self.num_questions + 1,
@@ -66,6 +72,9 @@ class DMKT(nn.Module):
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax()
 
+        # print for debug
+        print(self.key_matrix)
+
     def forward(self, q_data, qa_data, l_data):
         """
         data_type: np.array
@@ -84,9 +93,11 @@ class DMKT(nn.Module):
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
 
-        self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
-        nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
-        self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
+        # self.value_matrix = self.value_matrix_init
+        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
+        self.value_matrix = self.value_matrix_init.clone().repeat(batch_size, 1, 1)
+        # self.value_matrix = nn.Parameter(torch.cat([self.value_matrix_init.unsqueeze(0) for _ in range(batch_size)], 0).data)
+
 
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
         l_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
