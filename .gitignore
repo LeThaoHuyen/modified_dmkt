@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 
 experiments/
+data/
+
 
 # C extensions
 *.so
