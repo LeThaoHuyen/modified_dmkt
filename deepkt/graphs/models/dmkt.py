@@ -93,10 +93,12 @@ class DMKT(nn.Module):
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
 
-        # self.value_matrix = self.value_matrix_init
-        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
+
         self.value_matrix = self.value_matrix_init.clone().repeat(batch_size, 1, 1)
-        # self.value_matrix = nn.Parameter(torch.cat([self.value_matrix_init.unsqueeze(0) for _ in range(batch_size)], 0).data)
+
+        # self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
+        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
+        # self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
 
 
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
