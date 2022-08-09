@@ -181,7 +181,7 @@ class BaseAgent:
         The main operator
         :return:
         """
-        if self.mode in ["train", "test"]:
+        if self.mode in ["train", "test","test-post-test"]:
             try:
                 self.train()
             except KeyboardInterrupt:

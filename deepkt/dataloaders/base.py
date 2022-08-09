@@ -162,7 +162,7 @@ class BaseDataLoader:
                                                       stride=self.stride,
                                                       train=False,
                                                       metric=self.metric,
-                                                      pt_q_records=pt_a_records,
+                                                      pt_q_records=pt_q_records,
                                                       pt_a_records=pt_a_records,
                                                       mode=self.mode)
                 self.init_kwargs["batch_size"] = len(self.test_data)
