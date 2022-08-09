@@ -172,12 +172,16 @@ class DMKTAgent(BaseAgent):
         self.model.eval()
         if self.mode == "train":
             self.logger.info("Validation Result at Epoch: {}".format(self.current_epoch))
+        elif self.mode == 'test-post-test':
+            self.logger.info("Validation Result on post tests at Epoch: {}".format(self.current_epoch))
         else:
             self.logger.info("Test Result at Epoch: {}".format(self.current_epoch))
         test_loss = 0
         test_elements = 0
         pred_labels = []
         true_labels = []
+
+        # print(self.mode)
         with torch.no_grad():
             for data in self.data_loader.test_loader:
                 if self.mode == 'test-post-test':
