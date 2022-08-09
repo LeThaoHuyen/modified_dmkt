@@ -8,11 +8,12 @@
     "gpu_device": 0,
     "seed": 1024,
   
-    "data_name": "data5",
+    "data_name": "data1",
     "min_seq_len": 2,
     "max_seq_len": 20,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
+    "max_epoch": 20,
     "stride": 50,
 
     "max_subseq_len": 50,
@@ -36,7 +37,6 @@
     "weight_decay": 0,
     "beta1": 0.5,
     "beta2": 0.999,
-    "max_epoch": 20,
     "save_checkpoint": true,
   
     "log_interval": 10,

@@ -73,7 +73,9 @@ class DKVMN_ExtDataset(Dataset):
             # target_answers.append(answer_list)
             # target_mask.append(question_list != 0)
             target_answers.extend(answer_list)
-            target_mask.extend(question_list != 0)
+            # target_mask.extend(question_list != 0)
+            for q in question_list:
+                target_mask.append(q != 0)
 
             interactions.append(interaction_list)
 
