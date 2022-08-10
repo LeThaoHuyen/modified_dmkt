@@ -152,10 +152,11 @@ class BaseDataLoader:
                 q_records = data["test"]["q_data"]
                 a_records = data["test"]["a_data"]
                 l_records = data["test"]["l_data"]
+                sa_records = data["test"]["sa_data"]
                 pt_q_records = data["test"]["pt_q_data"]
                 pt_a_records = data["test"]["pt_a_data"]
 
-                self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records,
+                self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                       self.num_items,
                                                       self.max_seq_len,
                                                       min_seq_len=self.min_seq_len,

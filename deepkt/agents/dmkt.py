@@ -217,19 +217,29 @@ class DMKTAgent(BaseAgent):
 
                 if self.mode == 'test-post-test':
                     output = self.model(questions, interactions, lec_interactions_list, pt_questions)
+                    
                 else:
                     output = self.model(questions, interactions, lec_interactions_list)
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
                 # output = torch.masked_select(output, target_mask)
-                # label = torch.masked_select(target_answers, target_mask)
 
                 label = self.mask_select(target_answers, target_mask)
+                # label = torch.masked_select(target_answers, target_mask)
                 output = self.mask_select(output, target_mask)
 
+                if self.mode == 'test-post-test':
+                    # output = [[0.2, 0.1, 0.7], [0.4, 0.6, 0], ...]
+                    # --> output = [0, 1,...]
+                    _, max_indice = torch.max(output, 1)
+                    fill_values = torch.zeros(output.size(0)).long()
+                    output = torch.where(max_indice == 1, max_indice, fill_values) 
+                    criterition = nn.BCELoss(reduction='sum')
+                    test_loss += criterition(output.float(), label.float()).item()
+                else:
+                    test_loss += self.criterion(output, label).item()
                 test_elements += target_mask.int().sum()
-                test_loss += self.criterion(output, label).item()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
 
