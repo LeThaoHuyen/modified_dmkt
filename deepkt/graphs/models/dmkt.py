@@ -4,6 +4,17 @@ import torch.nn as nn
 import numpy as np
 # references: https://github.com/seewoo5/KT/blob/master/network/DKVMN.py
 
+class SimpleMLP(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+        self.linear1 = nn.Linear(in_dim, 150)
+        self.linear2 = nn.Linear(150, 300)
+        self.linear3 = nn.Linear(300, out_dim)
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.linear2(x)
+        x = self.linear3(x)
+        return x
 
 class DMKT(nn.Module):
     """
@@ -51,9 +62,12 @@ class DMKT(nn.Module):
         #                                         padding_idx=0)
         # self.qa_embed_matrix = nn.Linear(2, self.value_dim)
 
-        self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
-        self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 4 for the correctness of student's answer (1) and student's answer (1)
+        # self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
+        # self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
+        # self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
+        self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
+        self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
+        self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
