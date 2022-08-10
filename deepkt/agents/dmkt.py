@@ -51,7 +51,9 @@ class DMKTAgent(BaseAgent):
         config.num_items = self.data_loader.num_items
         config.num_nongradable_items = self.data_loader.num_nongradable_items
         self.model = DMKT(config)
-        self.criterion = nn.BCELoss(reduction='sum')
+        # self.criterion = nn.BCELoss(reduction='sum')
+        self.criterion = nn.CrossEntropyLoss(reduction='sum')
+
         if config.optimizer == "sgd":
             self.optimizer = optim.SGD(self.model.parameters(),
                                        lr=self.config.learning_rate,
@@ -123,6 +125,15 @@ class DMKTAgent(BaseAgent):
         plt.legend()
         plt.show()
 
+    def mask_select(self,data, mask):
+        res = []
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                if mask[i][j] == True:
+                    res.append(data[i][j])
+        res = torch.stack(res, 0)
+        return res
+
     def train_one_epoch(self):
         """
         One epoch of training
@@ -136,6 +147,9 @@ class DMKTAgent(BaseAgent):
         train_elements = 0
         for batch_idx, data in enumerate(tqdm(self.data_loader.train_loader)):
             interactions, lec_interactions_list, questions, target_answers, target_mask = data
+            # target_answers = [[0, 0, 1], [1, 0, 0], ...]
+            # output = [[0.02, 0.98, 0], [0.45, 0.55, 0], ...]
+
             interactions = interactions.to(self.device)
             lec_interactions_list = lec_interactions_list.to(self.device)
             questions = questions.to(self.device)
@@ -144,11 +158,16 @@ class DMKTAgent(BaseAgent):
             self.optimizer.zero_grad()  # clear previous gradient
             # need to double check the target mask
             output = self.model(questions, interactions, lec_interactions_list)
-            # print("target answer {}".format(target_answers))
-            label = torch.masked_select(target_answers, target_mask)
-            # print("output: {}".format(output))
-            output = torch.masked_select(output, target_mask)
-            loss = self.criterion(output.float(), label.float())
+
+            label = self.mask_select(target_answers, target_mask)
+            output = self.mask_select(output, target_mask)
+            # # print("target answer {}".format(target_answers))
+            # label = torch.masked_select(target_answers, target_mask)
+            # # print("output: {}".format(output))
+            # output = torch.masked_select(output, target_mask)
+
+            # loss = self.criterion(output.float(), label.float())
+            loss = self.criterion(output, label)
             # should use reduction="mean" not "sum", otherwise, performance drops significantly
             self.train_loss += loss.item()
             train_elements += target_mask.int().sum()
@@ -203,10 +222,14 @@ class DMKTAgent(BaseAgent):
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
-                output = torch.masked_select(output, target_mask)
-                label = torch.masked_select(target_answers, target_mask)
+                # output = torch.masked_select(output, target_mask)
+                # label = torch.masked_select(target_answers, target_mask)
+
+                label = self.mask_select(target_answers, target_mask)
+                output = self.mask_select(output, target_mask)
+
                 test_elements += target_mask.int().sum()
-                test_loss += self.criterion(output.float(), label.float()).item()
+                test_loss += self.criterion(output, label).item()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
 

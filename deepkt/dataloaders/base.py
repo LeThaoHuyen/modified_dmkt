@@ -57,8 +57,9 @@ class BaseDataLoader:
             q_records = data["train"]["q_data"]
             a_records = data["train"]["a_data"]
             l_records = data["train"]["l_data"]
+            sa_records = data["train"]["sa_data"]
             if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent", "DKVMN_IRT_ExtAgent"]:
-                self.train_data = DKVMN_ExtDataset(q_records, a_records, l_records,
+                self.train_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                    self.num_items,
                                                    self.max_seq_len,
                                                    min_seq_len=self.min_seq_len,
@@ -67,26 +68,26 @@ class BaseDataLoader:
                                                    stride=self.stride,
                                                    train=True,
                                                    metric=self.metric)
-            elif self.agent == "DKT_ExtAgent":
-                self.train_data = DKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-                                                 self.max_seq_len,
-                                                 min_seq_len=self.min_seq_len,
-                                                 max_subseq_len=self.max_subseq_len,
-                                                 stride=self.stride,
-                                                 train=True,
-                                                 metric=self.metric)
+            # elif self.agent == "DKT_ExtAgent":
+            #     self.train_data = DKT_ExtDataset(q_records, a_records, l_records, self.num_items,
+            #                                      self.max_seq_len,
+            #                                      min_seq_len=self.min_seq_len,
+            #                                      max_subseq_len=self.max_subseq_len,
+            #                                      stride=self.stride,
+            #                                      train=True,
+            #                                      metric=self.metric)
 
-            elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
-                self.train_data = SAKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-                                                  self.max_seq_len,
-                                                  min_seq_len=self.min_seq_len,
-                                                  max_subseq_len=self.max_subseq_len,
-                                                  stride=self.stride,
-                                                  train=True,
-                                                  metric=self.metric)
-            else:
-                self.train_data = MLP_ExtDataset(q_records, a_records, l_records,
-                                                 self.max_subseq_len)
+            # elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
+            #     self.train_data = SAKT_ExtDataset(q_records, a_records, l_records, self.num_items,
+            #                                       self.max_seq_len,
+            #                                       min_seq_len=self.min_seq_len,
+            #                                       max_subseq_len=self.max_subseq_len,
+            #                                       stride=self.stride,
+            #                                       train=True,
+            #                                       metric=self.metric)
+            # else:
+            #     self.train_data = MLP_ExtDataset(q_records, a_records, l_records,
+            #                                      self.max_subseq_len)
             if self.mode == "train":
                 self.init_kwargs["dataset"] = self.train_data
                 n_samples = len(self.train_data)
@@ -108,9 +109,10 @@ class BaseDataLoader:
                 q_records = data["test"]["q_data"]
                 a_records = data["test"]["a_data"]
                 l_records = data["test"]["l_data"]
+                sa_records = data["test"]["sa_data"]
                 if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent",
                                   "DKVMN_IRT_ExtAgent"]:
-                    self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records,
+                    self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                       self.num_items,
                                                       self.max_seq_len,
                                                       min_seq_len=self.min_seq_len,

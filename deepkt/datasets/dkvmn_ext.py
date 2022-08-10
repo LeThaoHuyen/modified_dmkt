@@ -1,3 +1,4 @@
+from textwrap import fill
 import numpy as np
 from torch.utils.data import Dataset
 from deepkt.datasets.transforms import SlidingWindow, Padding
@@ -8,7 +9,7 @@ class DKVMN_ExtDataset(Dataset):
     prepare the data for data loader, including truncating long sequence and padding
     """
 
-    def __init__(self, q_records, a_records, l_records, num_items, max_seq_len, min_seq_len=2,
+    def __init__(self, q_records, a_records, l_records, sa_records, num_items, max_seq_len, min_seq_len=2,
                  q_subseq_len=8, l_subseq_len=10, stride=None, train=True, metric="auc", pt_q_records=None, pt_a_records=None, mode=None):
         """
         :param min_seq_len: used to filter out seq. less than min_seq_len
@@ -26,8 +27,8 @@ class DKVMN_ExtDataset(Dataset):
             self.stride = max_seq_len - 1
         self.metric = metric
 
-        self.q_data, self.a_data, self.l_data = self._transform(
-            q_records, a_records, l_records, q_subseq_len, l_subseq_len)
+        self.q_data, self.a_data, self.l_data, self.sa_data = self._transform(
+            q_records, a_records, l_records, sa_records, q_subseq_len, l_subseq_len)
         print("train samples.: {}".format(self.l_data.shape))
         self.length = len(self.q_data)
         self.mode = mode
@@ -56,17 +57,19 @@ class DKVMN_ExtDataset(Dataset):
         questions = self.q_data[idx] # questions = [Q1, Q2, ...]
         answers = self.a_data[idx]   # answers = [A1, A2, ...]
         lectures = self.l_data[idx]
+        student_answers = self.sa_data[idx]
+
         assert len(questions) == len(answers) == len(lectures)
         interactions = []
 
         
         target_answers = []
         target_mask = []
-        for question_list, answer_list in zip(questions, answers):
+        for question_list, answer_list, student_answers_list in zip(questions, answers, student_answers):
             interaction_list = []
             for i, q in enumerate(question_list):
                 # q = [x1, x2, x3, ..., x8]
-                # qa = [x1,x2, .., x8, a]
+                # qa = [x1,x2, .., x8, a, 0, 1, 0] # last 3 elements for student's answer
                 q = list(q)
                 if self.isPaddingVector(q):
                     target_mask.append(False)
@@ -74,15 +77,13 @@ class DKVMN_ExtDataset(Dataset):
                     target_mask.append(True)
 
                 q.append(answer_list[i])
+                q.append(student_answers_list[i])
                 interaction_list.append(q)
-                
             
             interaction_list = np.array(interaction_list, dtype=float)
             interactions.append(interaction_list)
-            # instead of append like this which leads to [[...][....]] we can instead to get something like [...............]
-            # target_answers.append(answer_list)
-            # target_mask.append(question_list != 0)
-            target_answers.extend(answer_list)
+            # target_answers.extend(answer_list)
+            target_answers.extend(student_answers_list)
 
         if self.mode == None:
             return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
@@ -181,24 +182,27 @@ class DKVMN_ExtDataset(Dataset):
     #     return np.array(q_data), np.array(a_data), np.array(l_data)
 
 
-    def _transform(self, q_records, a_records, l_records, q_subseq_len, l_subseq_len):
+    def _transform(self, q_records, a_records, l_records, sa_records, q_subseq_len, l_subseq_len):
         q_data = []
         a_data = []
         l_data = []
+        sa_data = []
 
         setup_dim = len(q_records[0][0][0])
 
-        for q_list, a_list, l_list in zip(q_records, a_records, l_records):
-            assert len(q_list) == len(a_list)
+        for q_list, a_list, l_list, sa_list in zip(q_records, a_records, l_records, sa_records):
+            assert len(q_list) == len(a_list) == len(sa_list)
             
             if len(q_list) >= self.max_seq_len:
                 q_list = q_list[-self.max_seq_len:]
                 a_list = a_list[-self.max_seq_len:]
+                sa_list = sa_list[-self.max_seq_len:]
             else:
                 q_list.extend([[[0]*setup_dim] for _ in range (self.max_seq_len - len(q_list))])
                 a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
+                sa_list.extend([[0] for _ in range(self.max_seq_len - len(sa_list))]) # coi lai thu nen de la 0 ko
             
-            assert len(q_list) == len(a_list)
+            assert len(q_list) == len(a_list) == len(sa_list)
 
             if len(l_list) >= self.max_seq_len:
                 l_list = l_list[-self.max_seq_len:]
@@ -209,16 +213,19 @@ class DKVMN_ExtDataset(Dataset):
             q_padding = Padding(q_subseq_len, side='right', fillvalue=[0]*setup_dim)
             a_padding = Padding(q_subseq_len, side='right', fillvalue=0)
             l_padding = Padding(l_subseq_len, side='right', fillvalue=[0]*setup_dim)
+            sa_padding = Padding(q_subseq_len, side='right', fillvalue=0)
 
             q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
             a_list = [a_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
             l_list = [l_padding({"l": l[-l_subseq_len:]})["l"] for l in l_list]
+            sa_list = [sa_padding({"sa": sa[-q_subseq_len:]})["sa"] for sa in sa_list]
 
-            assert len(q_list) == len(a_list) == len(l_list) 
+            assert len(q_list) == len(a_list) == len(l_list) == len(sa_list)
 
             q_data.append(q_list)
             a_data.append(a_list)
             l_data.append(l_list)
+            sa_data.append(sa_list)
 
 
-        return np.array(q_data), np.array(a_data), np.array(l_data)
+        return np.array(q_data), np.array(a_data), np.array(l_data), np.array(sa_data)

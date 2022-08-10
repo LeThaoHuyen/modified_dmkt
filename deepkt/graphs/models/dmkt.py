@@ -1,7 +1,7 @@
 from typing import overload
 import torch
 import torch.nn as nn
-
+import numpy as np
 # references: https://github.com/seewoo5/KT/blob/master/network/DKVMN.py
 
 
@@ -22,7 +22,7 @@ class DMKT(nn.Module):
             torch.cuda.manual_seed(config.seed)
             self.device = torch.device("cpu")
         self.metric = config.metric
-
+        self.input_dim = config.input_dim
         # initialize the parameters
         self.num_questions = config.num_items
         self.num_nongradable_items = config.num_nongradable_items
@@ -53,13 +53,14 @@ class DMKT(nn.Module):
 
         self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
         self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = nn.Linear(config.input_dim + 1, self.value_dim)
+        self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 4 for the correctness of student's answer (1) and student's answer (1)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
         self.summary_fc = nn.Linear(2 * self.key_dim + 2 * self.value_dim, self.summary_dim)
         self.summary_fc2 = nn.Linear(self.key_dim + self.value_dim, self.summary_dim)
-        self.linear_out = nn.Linear(self.summary_dim, 1)
+        # self.linear_out = nn.Linear(self.summary_dim, 1)
+        self.linear_out = nn.Linear(self.summary_dim, 3)
 
         # initialize the activate functions
         self.sigmoid = nn.Sigmoid()
@@ -133,11 +134,10 @@ class DMKT(nn.Module):
                         mastery_level = torch.cat([q_read_content, q], dim=1)
                         summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                    # mastery_level = torch.cat([q_read_content, q], dim=1)
-                    # summary_output = self.tanh(self.summary_fc2(mastery_level))
-
-                    batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                    # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                    batch_sub_pred = self.softmax(self.linear_out(summary_output))
                     batch_pred.append(batch_sub_pred)
+
                     self.value_matrix = self.write(q_correlation_weight, qa)
                 else:
                     self.value_matrix = self.write(q_correlation_weight, qa)
@@ -157,8 +157,9 @@ class DMKT(nn.Module):
                 summary_output = self.tanh(self.summary_fc2(mastery_level))
                 batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sliced_pred)
-        
+
         batch_pred = torch.cat(batch_pred, dim=1)
+        batch_pred = batch_pred.view(batch_size, seq_len*self.input_dim, 3)
         return batch_pred
 
     # @overload
