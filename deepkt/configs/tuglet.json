@@ -1,20 +1,20 @@
 {
     "exp_name": "tuglet",
     "agent": "DMKTAgent",
-    "mode": "test-post-test",
+    "mode": "train",
     "metric": "auc",
   
     "cuda": true,
     "gpu_device": 0,
-    "seed": 301,
+    "seed": 3010,
   
-    "data_name": "data6_8pt_multiclass",
+    "data_name": "data6_8multiclass",
     "min_seq_len": 2,
 
-    "max_seq_len": 20,
+    "max_seq_len": 30,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
-    "max_epoch": 15,
+    "max_epoch": 10,
 
     "stride": 50,
     "validation_split": 0.2,

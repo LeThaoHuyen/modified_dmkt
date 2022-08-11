@@ -2,7 +2,7 @@ from textwrap import fill
 import numpy as np
 from torch.utils.data import Dataset
 from deepkt.datasets.transforms import SlidingWindow, Padding
-
+from sklearn.preprocessing import label_binarize
 
 class DKVMN_ExtDataset(Dataset):
     """
@@ -77,7 +77,9 @@ class DKVMN_ExtDataset(Dataset):
                     target_mask.append(True)
 
                 q.append(answer_list[i])
-                q.append(student_answers_list[i])
+                # q.append(student_answers_list[i])
+                one_hot = label_binarize(student_answers_list, classes=[0,1,2])
+                q.extend(one_hot[i])
                 interaction_list.append(q)
             
             interaction_list = np.array(interaction_list, dtype=float)

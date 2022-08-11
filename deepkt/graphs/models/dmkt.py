@@ -67,7 +67,7 @@ class DMKT(nn.Module):
         # self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
         self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
         self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
+        self.qa_embed_matrix = SimpleMLP(config.input_dim + 4, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -139,7 +139,7 @@ class DMKT(nn.Module):
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
                 q_read_content = self.read(q_correlation_weight)
-                
+                self.value_matrix = self.write(q_correlation_weight, qa)
                 if pt_q_data == None:
                     if j == 0:
                         mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
@@ -151,7 +151,7 @@ class DMKT(nn.Module):
                     # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                     batch_sub_pred = self.softmax(self.linear_out(summary_output))
                     batch_pred.append(batch_sub_pred)
-                    self.value_matrix = self.write(q_correlation_weight, qa)
+                   
                 else:
                     self.value_matrix = self.write(q_correlation_weight, qa)
 
