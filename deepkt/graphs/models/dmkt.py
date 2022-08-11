@@ -41,9 +41,14 @@ class DMKT(nn.Module):
         self.key_dim = config.key_dim
         self.value_dim = config.value_dim
         self.summary_dim = config.summary_dim
-        self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.init_std = config.init_std
+        # nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
+        self.key_matrix = nn.Parameter(torch.randn(self.num_concepts, self.key_dim))
         self.init_std = config.init_std
         nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
+
+
         self.value_matrix = None
 
         # initialize the layers
@@ -67,7 +72,7 @@ class DMKT(nn.Module):
         # self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
         self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
         self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = SimpleMLP(config.input_dim + 4, self.value_dim)
+        self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -177,6 +182,7 @@ class DMKT(nn.Module):
             batch_pred = batch_pred.view(batch_size, seq_len*question_len, 3)
         else:
             batch_pred = batch_pred.view(batch_size, 10, 3)
+            print(batch_pred)
         return batch_pred
 
     # @overload

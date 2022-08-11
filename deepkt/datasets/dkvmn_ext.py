@@ -26,6 +26,7 @@ class DKVMN_ExtDataset(Dataset):
             # because we pad 0 at the first element
             self.stride = max_seq_len - 1
         self.metric = metric
+        self.padding_value = -1
 
         self.q_data, self.a_data, self.l_data, self.sa_data = self._transform(
             q_records, a_records, l_records, sa_records, q_subseq_len, l_subseq_len)
@@ -34,6 +35,7 @@ class DKVMN_ExtDataset(Dataset):
         self.mode = mode
         self.pt_q_data = pt_q_records
         self.pt_a_data = pt_a_records
+        
 
     def __len__(self):
         """
@@ -71,15 +73,13 @@ class DKVMN_ExtDataset(Dataset):
                 # q = [x1, x2, x3, ..., x8]
                 # qa = [x1,x2, .., x8, a, 0, 1, 0] # last 3 elements for student's answer
                 q = list(q)
-                if self.isPaddingVector(q):
+                if self.isPaddingVector(q, self.padding_value):
                     target_mask.append(False)
                 else:
                     target_mask.append(True)
 
                 q.append(answer_list[i])
-                # q.append(student_answers_list[i])
-                one_hot = label_binarize(student_answers_list, classes=[0,1,2])
-                q.extend(one_hot[i])
+                q.append(student_answers_list[i])
                 interaction_list.append(q)
             
             interaction_list = np.array(interaction_list, dtype=float)
@@ -97,10 +97,10 @@ class DKVMN_ExtDataset(Dataset):
             return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
 
 
-    def isPaddingVector(self, q):
+    def isPaddingVector(self, q, padding_value):
         count = 0
         for x in q:
-            if x == 0:
+            if x == padding_value:
                 count += 1
         return count == len(q)
 
@@ -200,9 +200,9 @@ class DKVMN_ExtDataset(Dataset):
                 a_list = a_list[-self.max_seq_len:]
                 sa_list = sa_list[-self.max_seq_len:]
             else:
-                q_list.extend([[[0]*setup_dim] for _ in range (self.max_seq_len - len(q_list))])
-                a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
-                sa_list.extend([[0] for _ in range(self.max_seq_len - len(sa_list))]) # coi lai thu nen de la 0 ko
+                q_list.extend([[[self.padding_value]*setup_dim] for _ in range (self.max_seq_len - len(q_list))])
+                a_list.extend([[self.padding_value] for _ in range (self.max_seq_len - len(a_list))])
+                sa_list.extend([[self.padding_value] for _ in range(self.max_seq_len - len(sa_list))]) # coi lai thu nen de la 0 ko
             
             assert len(q_list) == len(a_list) == len(sa_list)
 
@@ -212,10 +212,10 @@ class DKVMN_ExtDataset(Dataset):
                 l_list.extend([[[0]*setup_dim] for _ in range (self.max_seq_len - len(l_list))])
 
             #padding = Padding(max_subseq_len, side='left', fillvalue=0)
-            q_padding = Padding(q_subseq_len, side='right', fillvalue=[0]*setup_dim)
-            a_padding = Padding(q_subseq_len, side='right', fillvalue=0)
-            l_padding = Padding(l_subseq_len, side='right', fillvalue=[0]*setup_dim)
-            sa_padding = Padding(q_subseq_len, side='right', fillvalue=0)
+            q_padding = Padding(q_subseq_len, side='right', fillvalue=[self.padding_value]*setup_dim)
+            a_padding = Padding(q_subseq_len, side='right', fillvalue=self.padding_value)
+            l_padding = Padding(l_subseq_len, side='right', fillvalue=[self.padding_value]*setup_dim)
+            sa_padding = Padding(q_subseq_len, side='right', fillvalue=self.padding_value)
 
             q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
             a_list = [a_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]

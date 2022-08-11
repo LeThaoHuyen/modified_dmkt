@@ -237,6 +237,7 @@ class DMKTAgent(BaseAgent):
                     output = torch.where(max_indice == 1, max_indice, fill_values) 
                     criterition = nn.BCELoss(reduction='sum')
                     test_loss += criterition(output.float(), label.float()).item()
+                    print(output)
                 else:
                     test_loss += self.criterion(output, label).item()
                     
