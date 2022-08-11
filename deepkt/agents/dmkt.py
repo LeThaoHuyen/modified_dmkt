@@ -147,7 +147,7 @@ class DMKTAgent(BaseAgent):
         train_elements = 0
         for batch_idx, data in enumerate(tqdm(self.data_loader.train_loader)):
             interactions, lec_interactions_list, questions, target_answers, target_mask = data
-            # target_answers = [[0, 0, 1], [1, 0, 0], ...]
+            # target_answers = [1, 0, 1, 2, ...]
             # output = [[0.02, 0.98, 0], [0.45, 0.55, 0], ...]
 
             interactions = interactions.to(self.device)
@@ -202,7 +202,7 @@ class DMKTAgent(BaseAgent):
 
         # print(self.mode)
         with torch.no_grad():
-            for data in self.data_loader.test_loader:
+            for data in self.data_loader.test_loader: # 1 batch
                 if self.mode == 'test-post-test':
                     interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
                     pt_questions = pt_questions.to(self.device)
@@ -239,6 +239,7 @@ class DMKTAgent(BaseAgent):
                     test_loss += criterition(output.float(), label.float()).item()
                 else:
                     test_loss += self.criterion(output, label).item()
+                    
                 test_elements += target_mask.int().sum()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
