@@ -26,6 +26,7 @@ class DKVMN_ExtDataset(Dataset):
             # because we pad 0 at the first element
             self.stride = max_seq_len - 1
         self.metric = metric
+        self.padding_value = -1
 
         self.q_data, self.a_data, self.l_data, self.sa_data = self._transform(
             q_records, a_records, l_records, sa_records, q_subseq_len, l_subseq_len)
@@ -100,7 +101,7 @@ class DKVMN_ExtDataset(Dataset):
     def isPaddingVector(self, q):
         count = 0
         for x in q:
-            if x == 0:
+            if x == self.padding_value:
                 count += 1
         return count == len(q)
 
@@ -200,9 +201,9 @@ class DKVMN_ExtDataset(Dataset):
                 a_list = a_list[-self.max_seq_len:]
                 sa_list = sa_list[-self.max_seq_len:]
             else:
-                q_list.extend([[[0]*setup_dim] for _ in range (self.max_seq_len - len(q_list))])
-                a_list.extend([[0] for _ in range (self.max_seq_len - len(a_list))])
-                sa_list.extend([[0] for _ in range(self.max_seq_len - len(sa_list))]) # coi lai thu nen de la 0 ko
+                q_list.extend([[[self.padding_value]*setup_dim] for _ in range (self.max_seq_len - len(q_list))])
+                a_list.extend([[self.padding_value] for _ in range (self.max_seq_len - len(a_list))])
+                sa_list.extend([[self.padding_value] for _ in range(self.max_seq_len - len(sa_list))]) # coi lai thu nen de la 0 ko
             
             assert len(q_list) == len(a_list) == len(sa_list)
 
@@ -212,10 +213,10 @@ class DKVMN_ExtDataset(Dataset):
                 l_list.extend([[[0]*setup_dim] for _ in range (self.max_seq_len - len(l_list))])
 
             #padding = Padding(max_subseq_len, side='left', fillvalue=0)
-            q_padding = Padding(q_subseq_len, side='right', fillvalue=[0]*setup_dim)
-            a_padding = Padding(q_subseq_len, side='right', fillvalue=0)
-            l_padding = Padding(l_subseq_len, side='right', fillvalue=[0]*setup_dim)
-            sa_padding = Padding(q_subseq_len, side='right', fillvalue=0)
+            q_padding = Padding(q_subseq_len, side='right', fillvalue=[self.padding_value]*setup_dim)
+            a_padding = Padding(q_subseq_len, side='right', fillvalue=self.padding_value)
+            l_padding = Padding(l_subseq_len, side='right', fillvalue=[self.padding_value]*setup_dim)
+            sa_padding = Padding(q_subseq_len, side='right', fillvalue=self.padding_value)
 
             q_list = [q_padding({"q": q[-q_subseq_len:]})["q"] for q in q_list]
             a_list = [a_padding({"a": a[-q_subseq_len:]})["a"] for a in a_list]
