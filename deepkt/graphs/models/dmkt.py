@@ -78,8 +78,8 @@ class DMKT(nn.Module):
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
         self.summary_fc = nn.Linear(2 * self.key_dim + 2 * self.value_dim, self.summary_dim)
         self.summary_fc2 = nn.Linear(self.key_dim + self.value_dim, self.summary_dim)
-        # self.linear_out = nn.Linear(self.summary_dim, 1)
-        self.linear_out = nn.Linear(self.summary_dim, 3)
+        self.linear_out = nn.Linear(self.summary_dim, 1)
+        # self.linear_out = nn.Linear(self.summary_dim, 3)
 
         # initialize the activate functions
         self.sigmoid = nn.Sigmoid()
@@ -144,7 +144,7 @@ class DMKT(nn.Module):
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
                 q_read_content = self.read(q_correlation_weight)
-                self.value_matrix = self.write(q_correlation_weight, qa)
+                
                 if pt_q_data == None:
                     if j == 0:
                         mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
@@ -154,9 +154,9 @@ class DMKT(nn.Module):
                         summary_output = self.tanh(self.summary_fc2(mastery_level))
 
                     # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
-                    batch_sub_pred = self.softmax(self.linear_out(summary_output))
+                    batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                     batch_pred.append(batch_sub_pred)
-                   
+                    self.value_matrix = self.write(q_correlation_weight, qa)
                 else:
                     self.value_matrix = self.write(q_correlation_weight, qa)
 
@@ -174,15 +174,15 @@ class DMKT(nn.Module):
                 mastery_level = torch.cat([q_read_content, q], dim=1)
                 summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                batch_sliced_pred = self.softmax(self.linear_out(summary_output))
+                batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sliced_pred)
 
         batch_pred = torch.cat(batch_pred, dim=1)
-        if pt_q_data == None:
-            batch_pred = batch_pred.view(batch_size, seq_len*question_len, 3)
-        else:
-            batch_pred = batch_pred.view(batch_size, 10, 3)
-            print(batch_pred)
+        # if pt_q_data == None:
+        #     batch_pred = batch_pred.view(batch_size, seq_len*question_len, 3)
+        # else:
+        #     batch_pred = batch_pred.view(batch_size, 10, 3)
+        #     print(batch_pred)
         return batch_pred
 
     # @overload

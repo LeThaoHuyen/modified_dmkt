@@ -51,8 +51,8 @@ class DMKTAgent(BaseAgent):
         config.num_items = self.data_loader.num_items
         config.num_nongradable_items = self.data_loader.num_nongradable_items
         self.model = DMKT(config)
-        # self.criterion = nn.BCELoss(reduction='sum')
-        self.criterion = nn.CrossEntropyLoss(reduction='sum')
+        self.criterion = nn.BCELoss(reduction='sum')
+        # self.criterion = nn.CrossEntropyLoss(reduction='sum')
 
         if config.optimizer == "sgd":
             self.optimizer = optim.SGD(self.model.parameters(),
@@ -159,15 +159,15 @@ class DMKTAgent(BaseAgent):
             # need to double check the target mask
             output = self.model(questions, interactions, lec_interactions_list)
 
-            label = self.mask_select(target_answers, target_mask)
-            output = self.mask_select(output, target_mask)
-            # # print("target answer {}".format(target_answers))
-            # label = torch.masked_select(target_answers, target_mask)
-            # # print("output: {}".format(output))
-            # output = torch.masked_select(output, target_mask)
+            # label = self.mask_select(target_answers, target_mask)
+            # output = self.mask_select(output, target_mask)
+            # print("target answer {}".format(target_answers))
+            label = torch.masked_select(target_answers, target_mask)
+            # print("output: {}".format(output))
+            output = torch.masked_select(output, target_mask)
 
-            # loss = self.criterion(output.float(), label.float())
-            loss = self.criterion(output, label)
+            loss = self.criterion(output.float(), label.float())
+            # loss = self.criterion(output, label)
             # should use reduction="mean" not "sum", otherwise, performance drops significantly
             self.train_loss += loss.item()
             train_elements += target_mask.int().sum()
@@ -223,24 +223,25 @@ class DMKTAgent(BaseAgent):
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
-                # output = torch.masked_select(output, target_mask)
+                output = torch.masked_select(output, target_mask)
+                label = torch.masked_select(target_answers, target_mask)
 
-                label = self.mask_select(target_answers, target_mask)
-                # label = torch.masked_select(target_answers, target_mask)
-                output = self.mask_select(output, target_mask)
+                # label = self.mask_select(target_answers, target_mask)
+                # output = self.mask_select(output, target_mask)
 
-                if self.mode == 'test-post-test':
-                    # output = [[0.2, 0.1, 0.7], [0.4, 0.6, 0], ...]
-                    # --> output = [0, 1,...]
-                    _, max_indice = torch.max(output, 1)
-                    fill_values = torch.zeros(output.size(0)).long()
-                    output = torch.where(max_indice == 1, max_indice, fill_values) 
-                    criterition = nn.BCELoss(reduction='sum')
-                    test_loss += criterition(output.float(), label.float()).item()
-                    print(output)
-                else:
-                    test_loss += self.criterion(output, label).item()
+                # if self.mode == 'test-post-test':
+                #     # output = [[0.2, 0.1, 0.7], [0.4, 0.6, 0], ...]
+                #     # --> output = [0, 1,...]
+                #     _, max_indice = torch.max(output, 1)
+                #     fill_values = torch.zeros(output.size(0)).long()
+                #     output = torch.where(max_indice == 1, max_indice, fill_values) 
+                #     criterition = nn.BCELoss(reduction='sum')
+                #     test_loss += criterition(output.float(), label.float()).item()
+                # else:
+                #     test_loss += self.criterion(output, label).item()
                     
+                # test_loss += self.criterion(output, label).item()
+                test_loss += self.criterion(output.float(), label.float())
                 test_elements += target_mask.int().sum()
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())

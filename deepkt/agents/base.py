@@ -135,22 +135,24 @@ class BaseAgent:
             print(self.true_labels)
             print(self.pred_labels)
             
-            perf = metrics.roc_auc_score(self.true_labels, self.pred_labels, multi_class='ovr', average='weighted')
+            # perf = metrics.roc_auc_score(self.true_labels, self.pred_labels, multi_class='ovr', average='weighted')
             
-            if self.mode != 'test-post-test':
-                pred_labels = np.argmax(self.pred_labels, axis=1)
-                print(metrics.confusion_matrix(self.true_labels, pred_labels))
-            # perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
-            # prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
-            # pr_auc = metrics.auc(rec, prec)
-            # f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
-            # accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
-            # self.logger.info('Accuracy: {:.05}'.format(accuracy))
-            # self.logger.info('F1: {:.05}'.format(f1))
+            # if self.mode != 'test-post-test':
+            #     pred_labels = np.argmax(self.pred_labels, axis=1)
+            #     print(metrics.confusion_matrix(self.true_labels, pred_labels))
+
+
+            perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
+            prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
+            pr_auc = metrics.auc(rec, prec)
+            f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
+            accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
+            self.logger.info('Accuracy: {:.05}'.format(accuracy))
+            self.logger.info('F1: {:.05}'.format(f1))
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             # self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
 
-            # print(metrics.confusion_matrix(self.true_labels, self.pred_labels > 0.5))
+            print(metrics.confusion_matrix(self.true_labels, self.pred_labels > 0.5))
 
             # fpr, tpr, threshold = metrics.roc_curve(self.true_labels, self.pred_labels)
             # print(threshold)
@@ -163,10 +165,10 @@ class BaseAgent:
             # plt.ylabel('Precision')
             # plt.xlabel('Recall')
             # plt.show()
-            # if perf > self.best_val_perf:
-            #     self.best_val_perf = perf
-            #     self.best_train_loss = self.train_loss.item()
-            #     self.best_epoch = self.current_epoch
+            if perf > self.best_val_perf:
+                self.best_val_perf = perf
+                self.best_train_loss = self.train_loss.item()
+                self.best_epoch = self.current_epoch
         else:
             raise AttributeError
 
