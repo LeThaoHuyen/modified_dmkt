@@ -41,7 +41,10 @@ class DMKT(nn.Module):
         self.key_dim = config.key_dim
         self.value_dim = config.value_dim
         self.summary_dim = config.summary_dim
-        self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.key_matrix = torch.Tensor(self.num_concepts, self.key_dim).to(self.device)
+        # self.init_std = config.init_std
+        # nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
+        self.key_matrix = nn.Parameter(torch.randn(self.num_concepts, self.key_dim))
         self.init_std = config.init_std
         nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
         self.value_matrix = None
@@ -139,7 +142,7 @@ class DMKT(nn.Module):
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
                 q_read_content = self.read(q_correlation_weight)
-                self.value_matrix = self.write(q_correlation_weight, qa)
+                
                 if pt_q_data == None:
                     if j == 0:
                         mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
@@ -151,7 +154,7 @@ class DMKT(nn.Module):
                     # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                     batch_sub_pred = self.softmax(self.linear_out(summary_output))
                     batch_pred.append(batch_sub_pred)
-                   
+                    self.value_matrix = self.write(q_correlation_weight, qa)
                 else:
                     self.value_matrix = self.write(q_correlation_weight, qa)
 

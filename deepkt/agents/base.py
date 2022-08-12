@@ -137,8 +137,9 @@ class BaseAgent:
             
             perf = metrics.roc_auc_score(self.true_labels, self.pred_labels, multi_class='ovr', average='weighted')
 
-            pred_labels = np.argmax(self.pred_labels, axis=1)
-            print(metrics.confusion_matrix(self.true_labels, pred_labels))
+            if self.mode != 'test-post-test':
+                pred_labels = np.argmax(self.pred_labels, axis=1)
+                print(metrics.confusion_matrix(self.true_labels, pred_labels))
             # perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
             # prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
             # pr_auc = metrics.auc(rec, prec)
@@ -162,10 +163,10 @@ class BaseAgent:
             # plt.ylabel('Precision')
             # plt.xlabel('Recall')
             # plt.show()
-            # if perf > self.best_val_perf:
-            #     self.best_val_perf = perf
-            #     self.best_train_loss = self.train_loss.item()
-            #     self.best_epoch = self.current_epoch
+            if perf > self.best_val_perf:
+                self.best_val_perf = perf
+                self.best_train_loss = self.train_loss.item()
+                self.best_epoch = self.current_epoch
         else:
             raise AttributeError
 

@@ -8,13 +8,13 @@
     "gpu_device": 0,
     "seed": 3010,
   
-    "data_name": "data6_8multiclass",
+    "data_name": "data6_8pt_multiclass",
     "min_seq_len": 2,
 
     "max_seq_len": 30,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
-    "max_epoch": 10,
+    "max_epoch": 5,
 
     "stride": 50,
     "validation_split": 0.2,
