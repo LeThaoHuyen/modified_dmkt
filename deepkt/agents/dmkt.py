@@ -139,6 +139,7 @@ class DMKTAgent(BaseAgent):
         One epoch of training
         :return:
         """
+        print(self.model.qa_embed_matrix.linear1.weight[5])
         self.model.train()
         self.logger.info("\n")
         self.logger.info("Train Epoch: {}".format(self.current_epoch))
@@ -146,24 +147,22 @@ class DMKTAgent(BaseAgent):
         self.train_loss = 0
         train_elements = 0
         for batch_idx, data in enumerate(tqdm(self.data_loader.train_loader)):
-            interactions, lec_interactions_list, questions, target_answers, target_mask = data
-            # target_answers = [1, 0, 1, 2, ...]
-            # output = [[0.02, 0.98, 0], [0.45, 0.55, 0], ...]
+            interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
 
+            pt_questions = pt_questions.to(self.device)
             interactions = interactions.to(self.device)
             lec_interactions_list = lec_interactions_list.to(self.device)
             questions = questions.to(self.device)
             target_answers = target_answers.to(self.device)
             target_mask = target_mask.to(self.device)
             self.optimizer.zero_grad()  # clear previous gradient
-            # need to double check the target mask
-            output = self.model(questions, interactions, lec_interactions_list)
+
+            output = self.model(questions, interactions, lec_interactions_list, pt_questions)
 
             # label = self.mask_select(target_answers, target_mask)
             # output = self.mask_select(output, target_mask)
             # print("target answer {}".format(target_answers))
             label = torch.masked_select(target_answers, target_mask)
-            # print("output: {}".format(output))
             output = torch.masked_select(output, target_mask)
 
             loss = self.criterion(output.float(), label.float())
@@ -203,26 +202,25 @@ class DMKTAgent(BaseAgent):
         # print(self.mode)
         with torch.no_grad():
             for data in self.data_loader.test_loader: # 1 batch
-                if self.mode == 'test-post-test':
-                    interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
-                    pt_questions = pt_questions.to(self.device)
-                else:
-                    interactions, lec_interactions_list, questions, target_answers, target_mask = data
+                interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
 
+                pt_questions = pt_questions.to(self.device)
                 interactions = interactions.to(self.device)
                 lec_interactions_list = lec_interactions_list.to(self.device)
                 questions = questions.to(self.device)
                 target_answers = target_answers.to(self.device)
                 target_mask = target_mask.to(self.device)
 
-                if self.mode == 'test-post-test':
-                    output = self.model(questions, interactions, lec_interactions_list, pt_questions)
+                # if self.mode == 'test-post-test':
+                #     output = self.model(questions, interactions, lec_interactions_list, pt_questions)
                     
-                else:
-                    output = self.model(questions, interactions, lec_interactions_list)
+                # else:
+                    # output = self.model(questions, interactions, lec_interactions_list)
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()
+
+                output = self.model(questions, interactions, lec_interactions_list, pt_questions)
                 output = torch.masked_select(output, target_mask)
                 label = torch.masked_select(target_answers, target_mask)
 
@@ -246,11 +244,6 @@ class DMKTAgent(BaseAgent):
                 pred_labels.extend(output.tolist())
                 true_labels.extend(label.tolist())
 
-                # print(pred_labels)
-                # print(output)
-                # print(list(zip(true_labels, pred_labels)))
-                # print(true_labels)
-                # print(pred_labels)
         test_loss = test_loss/test_elements
         self.logger.info("Test Loss: {:.6f}".format(test_loss))
         self.test_loss_list.append(test_loss)

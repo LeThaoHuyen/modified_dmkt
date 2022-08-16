@@ -143,39 +143,54 @@ class DMKT(nn.Module):
                 q = sliced_q_embed_data[j].squeeze(1)
                 qa = sliced_a_embed_data[j].squeeze(1)
                 q_correlation_weight = self.compute_correlation_weight(q)
-                q_read_content = self.read(q_correlation_weight)
+                # q_read_content = self.read(q_correlation_weight)
                 
-                if pt_q_data == None:
-                    if j == 0:
-                        mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
-                        summary_output = self.tanh(self.summary_fc(mastery_level))
-                    else:
-                        mastery_level = torch.cat([q_read_content, q], dim=1)
-                        summary_output = self.tanh(self.summary_fc2(mastery_level))
+                
+                # if pt_q_data == None:
+                #     if j == 0:
+                #         mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
+                #         summary_output = self.tanh(self.summary_fc(mastery_level))
+                #     else:
+                #         mastery_level = torch.cat([q_read_content, q], dim=1)
+                #         summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                    # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
-                    batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
-                    batch_pred.append(batch_sub_pred)
-                    self.value_matrix = self.write(q_correlation_weight, qa)
-                else:
-                    self.value_matrix = self.write(q_correlation_weight, qa)
+                #     # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                #     batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                #     batch_pred.append(batch_sub_pred)
+                #     self.value_matrix = self.write(q_correlation_weight, qa)
+                # else:
+                #     self.value_matrix = self.write(q_correlation_weight, qa)
 
-        if pt_q_data != None:
-            # predict on post tests only
-            pt_q_data = pt_q_data.float()
-            num_pt_setups = pt_q_data.size(1)
-            pt_embed_data = self.q_embed_matrix(pt_q_data)
-            sliced_pt_embed_data = torch.chunk(pt_embed_data, num_pt_setups, dim=1)
-            
-            for i in range(num_pt_setups):
-                q = sliced_pt_embed_data[i].squeeze(1) 
-                q_correlation_weight = self.compute_correlation_weight(q)
-                q_read_content = self.read(q_correlation_weight)
-                mastery_level = torch.cat([q_read_content, q], dim=1)
-                summary_output = self.tanh(self.summary_fc2(mastery_level))
+                # if j == 0:
+                #     mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
+                #     summary_output = self.tanh(self.summary_fc(mastery_level))
+                # else:
+                #     mastery_level = torch.cat([q_read_content, q], dim=1)
+                #     summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))
-                batch_pred.append(batch_sliced_pred)
+                # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                # batch_pred.append(batch_sub_pred)
+
+                self.value_matrix = self.write(q_correlation_weight, qa)
+        
+        # predict on post tests only
+        pt_q_data = pt_q_data.float()
+        num_pt_setups = pt_q_data.size(1)
+        pt_embed_data = self.q_embed_matrix(pt_q_data)
+        sliced_pt_embed_data = torch.chunk(pt_embed_data, num_pt_setups, dim=1)
+        
+        for i in range(num_pt_setups):
+            q = sliced_pt_embed_data[i].squeeze(1) 
+            q_correlation_weight = self.compute_correlation_weight(q)
+            q_read_content = self.read(q_correlation_weight)
+            mastery_level = torch.cat([q_read_content, q], dim=1)
+            summary_output = self.tanh(self.summary_fc2(mastery_level))
+
+            batch_sliced_pred = self.sigmoid(self.linear_out(summary_output))
+            batch_pred.append(batch_sliced_pred)
+
+            # todo: write also students' answers
+            self.value_matrix = self.write(q_correlation_weight, q)
 
         batch_pred = torch.cat(batch_pred, dim=1)
         # if pt_q_data == None:

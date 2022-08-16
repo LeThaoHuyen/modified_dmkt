@@ -58,36 +58,22 @@ class BaseDataLoader:
             a_records = data["train"]["a_data"]
             l_records = data["train"]["l_data"]
             sa_records = data["train"]["sa_data"]
+
+            pt_q_records = data["train"]["pt_q_data"]
+            pt_sa_records = data["train"]["pt_sa_data"]
             if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent", "DKVMN_IRT_ExtAgent"]:
                 self.train_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
-                                                   self.num_items,
-                                                   self.max_seq_len,
-                                                   min_seq_len=self.min_seq_len,
-                                                   q_subseq_len=self.q_subseq_len,
-                                                   l_subseq_len=self.l_subseq_len,
-                                                   stride=self.stride,
-                                                   train=True,
-                                                   metric=self.metric)
-            # elif self.agent == "DKT_ExtAgent":
-            #     self.train_data = DKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-            #                                      self.max_seq_len,
-            #                                      min_seq_len=self.min_seq_len,
-            #                                      max_subseq_len=self.max_subseq_len,
-            #                                      stride=self.stride,
-            #                                      train=True,
-            #                                      metric=self.metric)
-
-            # elif self.agent in ["AKT_ExtAgent", "SAKT_ExtAgent", "SAINT_ExtAgent"]:
-            #     self.train_data = SAKT_ExtDataset(q_records, a_records, l_records, self.num_items,
-            #                                       self.max_seq_len,
-            #                                       min_seq_len=self.min_seq_len,
-            #                                       max_subseq_len=self.max_subseq_len,
-            #                                       stride=self.stride,
-            #                                       train=True,
-            #                                       metric=self.metric)
-            # else:
-            #     self.train_data = MLP_ExtDataset(q_records, a_records, l_records,
-            #                                      self.max_subseq_len)
+                                                    self.num_items,
+                                                    self.max_seq_len,
+                                                    min_seq_len=self.min_seq_len,
+                                                    q_subseq_len=self.q_subseq_len,
+                                                    l_subseq_len=self.l_subseq_len,
+                                                    stride=self.stride,
+                                                    train=True,
+                                                    metric=self.metric,
+                                                    pt_q_records=pt_q_records,
+                                                    pt_sa_records=pt_sa_records,)
+            
             if self.mode == "train":
                 self.init_kwargs["dataset"] = self.train_data
                 n_samples = len(self.train_data)
@@ -110,17 +96,22 @@ class BaseDataLoader:
                 a_records = data["test"]["a_data"]
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
+                pt_q_records = data["test"]["pt_q_data"]
+                pt_sa_records = data["test"]["pt_sa_data"]
+
                 if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent",
                                   "DKVMN_IRT_ExtAgent"]:
                     self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
-                                                      self.num_items,
-                                                      self.max_seq_len,
-                                                      min_seq_len=self.min_seq_len,
-                                                      q_subseq_len=self.q_subseq_len,
-                                                      l_subseq_len=self.l_subseq_len,
-                                                      stride=self.stride,
-                                                      train=False,
-                                                      metric=self.metric)
+                                                        self.num_items,
+                                                        self.max_seq_len,
+                                                        min_seq_len=self.min_seq_len,
+                                                        q_subseq_len=self.q_subseq_len,
+                                                        l_subseq_len=self.l_subseq_len,
+                                                        stride=self.stride,
+                                                        train=False,
+                                                        metric=self.metric,
+                                                        pt_q_records=pt_q_records,
+                                                        pt_sa_records=pt_sa_records)
                 # elif self.agent == "DKT_ExtAgent":
                 #     self.test_data = DKT_ExtDataset(q_records, a_records, l_records,
                 #                                     self.num_items,
@@ -154,20 +145,20 @@ class BaseDataLoader:
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
                 pt_q_records = data["test"]["pt_q_data"]
-                pt_a_records = data["test"]["pt_a_data"]
+                pt_sa_records = data["test"]["pt_sa_data"]
 
                 self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
-                                                      self.num_items,
-                                                      self.max_seq_len,
-                                                      min_seq_len=self.min_seq_len,
-                                                      q_subseq_len=self.q_subseq_len,
-                                                      l_subseq_len=self.l_subseq_len,
-                                                      stride=self.stride,
-                                                      train=False,
-                                                      metric=self.metric,
-                                                      pt_q_records=pt_q_records,
-                                                      pt_a_records=pt_a_records,
-                                                      mode=self.mode)
+                                                        self.num_items,
+                                                        self.max_seq_len,
+                                                        min_seq_len=self.min_seq_len,
+                                                        q_subseq_len=self.q_subseq_len,
+                                                        l_subseq_len=self.l_subseq_len,
+                                                        stride=self.stride,
+                                                        train=False,
+                                                        metric=self.metric,
+                                                        pt_q_records=pt_q_records,
+                                                        pt_sa_records=pt_sa_records)
+                                                        
                 self.init_kwargs["batch_size"] = len(self.test_data)
                 self.test_loader = DataLoader(self.test_data, **self.init_kwargs)
 

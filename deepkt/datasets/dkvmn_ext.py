@@ -10,7 +10,7 @@ class DKVMN_ExtDataset(Dataset):
     """
 
     def __init__(self, q_records, a_records, l_records, sa_records, num_items, max_seq_len, min_seq_len=2,
-                 q_subseq_len=8, l_subseq_len=10, stride=None, train=True, metric="auc", pt_q_records=None, pt_a_records=None, mode=None):
+                 q_subseq_len=8, l_subseq_len=10, stride=None, train=True, metric="auc", pt_q_records=None, pt_sa_records=None):
         """
         :param min_seq_len: used to filter out seq. less than min_seq_len
         :param max_seq_len: used to truncate seq. greater than max_seq_len
@@ -32,9 +32,8 @@ class DKVMN_ExtDataset(Dataset):
             q_records, a_records, l_records, sa_records, q_subseq_len, l_subseq_len)
         print("train samples.: {}".format(self.l_data.shape))
         self.length = len(self.q_data)
-        self.mode = mode
         self.pt_q_data = pt_q_records
-        self.pt_a_data = pt_a_records
+        self.pt_sa_data = pt_sa_records
         
 
     def __len__(self):
@@ -87,14 +86,13 @@ class DKVMN_ExtDataset(Dataset):
             # target_answers.extend(answer_list)
             target_answers.extend(student_answers_list)
 
-        if self.mode == None:
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
-
-        else:
-            pt_questions = self.pt_q_data[idx]
-            target_answers = self.pt_a_data[idx]
-            target_mask = [True]*10
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
+        # if self.mode == None:
+        #     return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
+        # else:
+        pt_questions = self.pt_q_data[idx]
+        target_answers = self.pt_sa_data[idx]
+        target_mask = [True]*10
+        return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
 
 
     def isPaddingVector(self, q, padding_value):
