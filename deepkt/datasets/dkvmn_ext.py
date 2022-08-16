@@ -70,7 +70,6 @@ class DKVMN_ExtDataset(Dataset):
             interaction_list = []
             for i, q in enumerate(question_list):
                 # q = [x1, x2, x3, ..., x8]
-                # qa = [x1,x2, .., x8, a, 0, 1, 0] # last 3 elements for student's answer
                 q = list(q)
                 if self.isPaddingVector(q, self.padding_value):
                     target_mask.append(False)
@@ -90,8 +89,8 @@ class DKVMN_ExtDataset(Dataset):
         #     return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
         # else:
         pt_questions = self.pt_q_data[idx]
-        target_answers = self.pt_sa_data[idx]
-        target_mask = [True]*10
+        target_answers.extend(self.pt_sa_data[idx])
+        target_mask.extend([True]*10)
         return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
 
 

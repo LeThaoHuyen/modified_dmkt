@@ -48,8 +48,11 @@ class DMKT(nn.Module):
         self.init_std = config.init_std
         nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
 
+        # self.value_matrix = None
 
-        self.value_matrix = None
+        self.value_matrix_init = nn.Parameter(torch.randn(self.num_concepts, self.value_dim))
+        nn.init.normal_(self.value_matrix_init, mean = 0, std = self.init_std)
+
 
         # initialize the layers
         # self.q_embed_matrix = nn.Embedding(num_embeddings=self.num_questions + 1,
@@ -102,9 +105,11 @@ class DMKT(nn.Module):
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
 
-        self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
-        nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
-        self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
+        # self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
+        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
+        # self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
+
+        self.value_matrix = self.value_matrix_init.clone().repeat(batch_size, 1, 1)
 
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
         l_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
@@ -161,15 +166,18 @@ class DMKT(nn.Module):
                 # else:
                 #     self.value_matrix = self.write(q_correlation_weight, qa)
 
-                # if j == 0:
-                #     mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
-                #     summary_output = self.tanh(self.summary_fc(mastery_level))
-                # else:
-                #     mastery_level = torch.cat([q_read_content, q], dim=1)
-                #     summary_output = self.tanh(self.summary_fc2(mastery_level))
+                if j == 0:
+                    mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
+                    summary_output = self.tanh(self.summary_fc(mastery_level))
+                else:
+                    mastery_level = torch.cat([q_read_content, q], dim=1)
+                    summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
-                # batch_pred.append(batch_sub_pred)
+                # mastery_level = torch.cat([q_read_content, q], dim=1)
+                # summary_output = self.tanh(self.summary_fc2(mastery_level))
+
+                batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
+                batch_pred.append(batch_sub_pred)
 
                 self.value_matrix = self.write(q_correlation_weight, qa)
         

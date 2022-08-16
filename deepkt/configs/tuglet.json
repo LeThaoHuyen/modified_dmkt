@@ -14,7 +14,7 @@
     "max_seq_len": 20,
     "q_subseq_len": 8,
     "l_subseq_len": 10,
-    "max_epoch": 20,
+    "max_epoch": 15,
 
     "stride": 50,
     "validation_split": 0.2,

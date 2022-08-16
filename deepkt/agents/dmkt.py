@@ -221,8 +221,19 @@ class DMKTAgent(BaseAgent):
                 # test_elements += target_mask[:, 1:].int().sum()
 
                 output = self.model(questions, interactions, lec_interactions_list, pt_questions)
+
+                output = output[:, -10:]
+                target_answers = target_answers[:, -10:]
+                target_mask = target_mask[:, -10:]
+
                 output = torch.masked_select(output, target_mask)
                 label = torch.masked_select(target_answers, target_mask)
+
+                print(output.size())
+
+                # output = output[:, -10:]
+                # print(output)
+                # label = label[:, -10:]
 
                 # label = self.mask_select(target_answers, target_mask)
                 # output = self.mask_select(output, target_mask)
