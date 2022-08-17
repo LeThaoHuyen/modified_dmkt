@@ -49,7 +49,10 @@ class DMKT(nn.Module):
         nn.init.normal_(self.key_matrix, mean=0, std=self.init_std)
 
 
-        self.value_matrix = None
+        # self.value_matrix = None
+        self.value_matrix_init = nn.Parameter(torch.randn(self.num_concepts, self.value_dim))
+        nn.init.normal_(self.value_matrix_init, mean=0, std=self.init_std)
+
 
         # initialize the layers
         # self.q_embed_matrix = nn.Embedding(num_embeddings=self.num_questions + 1,
@@ -67,12 +70,12 @@ class DMKT(nn.Module):
         #                                         padding_idx=0)
         # self.qa_embed_matrix = nn.Linear(2, self.value_dim)
 
-        # self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
-        # self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
-        # self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
-        self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
-        self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
+        self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
+        self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
+        self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
+        # self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
+        # self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
+        # self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -102,9 +105,10 @@ class DMKT(nn.Module):
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
 
-        self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
-        nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
-        self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
+        # self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
+        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
+        # self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
+        self.value_matrix =self.value_matrix_init.clone().repeat(batch_size, 1, 1)
 
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
         l_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
@@ -152,6 +156,9 @@ class DMKT(nn.Module):
                     else:
                         mastery_level = torch.cat([q_read_content, q], dim=1)
                         summary_output = self.tanh(self.summary_fc2(mastery_level))
+
+                    # mastery_level = torch.cat([q_read_content, q], dim=1)
+                    # summary_output = self.tanh(self.summary_fc2(mastery_level))
 
                     # batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                     batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
