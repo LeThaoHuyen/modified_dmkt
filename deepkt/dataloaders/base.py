@@ -154,7 +154,10 @@ class BaseDataLoader:
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
                 pt_q_records = data["test"]["pt_q_data"]
-                pt_a_records = data["test"]["pt_a_data"]
+                if "pt_a_data" in data["test"]:
+                    pt_a_records = data["test"]["pt_a_data"]
+                else:
+                    pt_a_records = data["test"]["pt_sa_data"]
 
                 self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                       self.num_items,
