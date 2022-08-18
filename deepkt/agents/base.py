@@ -143,11 +143,16 @@ class BaseAgent:
 
 
             perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
-            prec, rec, _ = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
+            prec, rec, threshold = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
             pr_auc = metrics.auc(rec, prec)
             f1 = metrics.f1_score(self.true_labels, self.pred_labels > 0.5)
-            accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
-            self.logger.info('Accuracy: {:.05}'.format(accuracy))
+
+            max_accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
+            for x in threshold:
+                accuracy = metrics.accuracy_score(self.true_labels, self.pred_labels > x)
+                max_accuracy = max(max_accuracy, accuracy)
+
+            self.logger.info('Accuracy: {:.05},{:.05}'.format(accuracy, max_accuracy))
             self.logger.info('F1: {:.05}'.format(f1))
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             # self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
