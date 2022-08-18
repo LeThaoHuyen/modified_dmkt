@@ -79,7 +79,7 @@ class DKVMN_ExtDataset(Dataset):
                     target_mask.append(True)
 
                 q.append(answer_list[i])
-                q.append(student_answers_list[i])
+                # q.append(student_answers_list[i])
                 interaction_list.append(q)
             
             interaction_list = np.array(interaction_list, dtype=float)

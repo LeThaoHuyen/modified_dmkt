@@ -72,7 +72,7 @@ class DMKT(nn.Module):
 
         self.q_embed_matrix = nn.Linear(config.input_dim, self.key_dim)
         self.l_embed_matrix = nn.Linear(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
+        self.qa_embed_matrix = nn.Linear(config.input_dim + 1, self.value_dim) 
         # self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
         # self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
         # self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
