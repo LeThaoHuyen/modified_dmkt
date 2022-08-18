@@ -8,7 +8,7 @@
     "gpu_device": 0,
     "seed": 3010,
   
-    "data_name": "data6_8new",
+    "data_name": "data6_8new2",
     "min_seq_len": 2,
 
     "max_seq_len": 20,

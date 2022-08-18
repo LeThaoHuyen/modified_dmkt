@@ -60,7 +60,7 @@ class BaseDataLoader:
             sa_records = data["train"]["sa_data"]
 
             pt_q_records = data["train"]["pt_q_data"]
-            pt_sa_records = data["train"]["pt_sa_data"]
+            pt_sa_records = data["train"]["pt_a_data"]
             if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent", "DKVMN_IRT_ExtAgent"]:
                 self.train_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                     self.num_items,
@@ -97,7 +97,7 @@ class BaseDataLoader:
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
                 pt_q_records = data["test"]["pt_q_data"]
-                pt_sa_records = data["test"]["pt_sa_data"]
+                pt_sa_records = data["test"]["pt_a_data"]
 
                 if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent",
                                   "DKVMN_IRT_ExtAgent"]:
@@ -145,7 +145,7 @@ class BaseDataLoader:
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
                 pt_q_records = data["test"]["pt_q_data"]
-                pt_sa_records = data["test"]["pt_sa_data"]
+                pt_sa_records = data["test"]["pt_a_data"]
 
                 self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
                                                         self.num_items,

@@ -75,7 +75,7 @@ class DMKT(nn.Module):
         # self.qa_embed_matrix = nn.Linear(config.input_dim + 2, self.value_dim) # plus 2 for the correctness of student's answer (1) and student's answer (1)
         self.q_embed_matrix = SimpleMLP(config.input_dim, self.key_dim)
         self.l_embed_matrix = SimpleMLP(config.input_dim, self.value_dim)
-        self.qa_embed_matrix = SimpleMLP(config.input_dim + 2, self.value_dim)
+        self.qa_embed_matrix = SimpleMLP(config.input_dim + 1, self.value_dim)
 
         self.erase_linear = nn.Linear(self.value_dim, self.value_dim)
         self.add_linear = nn.Linear(self.value_dim, self.value_dim)
@@ -166,15 +166,15 @@ class DMKT(nn.Module):
                 # else:
                 #     self.value_matrix = self.write(q_correlation_weight, qa)
 
-                if j == 0:
-                    mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
-                    summary_output = self.tanh(self.summary_fc(mastery_level))
-                else:
-                    mastery_level = torch.cat([q_read_content, q], dim=1)
-                    summary_output = self.tanh(self.summary_fc2(mastery_level))
+                # if j == 0:
+                #     mastery_level = torch.cat([q_read_content, q, l_read_content, ls], dim=1)
+                #     summary_output = self.tanh(self.summary_fc(mastery_level))
+                # else:
+                #     mastery_level = torch.cat([q_read_content, q], dim=1)
+                #     summary_output = self.tanh(self.summary_fc2(mastery_level))
 
-                # mastery_level = torch.cat([q_read_content, q], dim=1)
-                # summary_output = self.tanh(self.summary_fc2(mastery_level))
+                mastery_level = torch.cat([q_read_content, q], dim=1)
+                summary_output = self.tanh(self.summary_fc2(mastery_level))
 
                 batch_sub_pred = self.sigmoid(self.linear_out(summary_output))
                 batch_pred.append(batch_sub_pred)

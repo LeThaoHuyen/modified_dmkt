@@ -77,20 +77,20 @@ class DKVMN_ExtDataset(Dataset):
                     target_mask.append(True)
 
                 q.append(answer_list[i])
-                q.append(student_answers_list[i])
+                # q.append(student_answers_list[i])
                 interaction_list.append(q)
             
             interaction_list = np.array(interaction_list, dtype=float)
             interactions.append(interaction_list)
-            # target_answers.extend(answer_list)
-            target_answers.extend(student_answers_list)
+            target_answers.extend(answer_list)
+            # target_answers.extend(student_answers_list)
 
-        # if self.mode == None:
-        #     return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
-        # else:
         pt_questions = self.pt_q_data[idx]
         target_answers.extend(self.pt_sa_data[idx])
         target_mask.extend([True]*10)
+        # target_answers = (self.pt_sa_data[idx])
+        # target_mask = ([True]*10)
+
         return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
 
 
