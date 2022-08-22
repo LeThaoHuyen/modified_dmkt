@@ -3,6 +3,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from deepkt.datasets.transforms import SlidingWindow, Padding
 from sklearn.preprocessing import label_binarize
+import torch
 
 class DKVMN_ExtDataset(Dataset):
     """
@@ -61,10 +62,27 @@ class DKVMN_ExtDataset(Dataset):
         lectures = self.l_data[idx]
         student_answers = self.sa_data[idx]
 
-        assert len(questions) == len(answers) == len(lectures)
-        interactions = []
+        lecture_mask = []
 
+        padding_mask = [0]*12
+        padding_mask.append(1)
+
+        l_mask = [1]*12
+        l_mask.append(0)
+
+        for lecture_list in lectures:
+            sub_lecture_mask = []
+            for l in lecture_list:
+                l = list(l)
+                if self.isPaddingVector(l, self.padding_value):
+                    sub_lecture_mask.append(padding_mask) # to do: change to self.num_concepts --> need to pass config
+                else:
+                    sub_lecture_mask.append(l_mask) # to do
+            lecture_mask.append(sub_lecture_mask)
+
+        assert len(questions) == len(answers) == len(lectures)
         
+        interactions = []
         target_answers = []
         target_mask = []
         for question_list, answer_list, student_answers_list in zip(questions, answers, student_answers):
@@ -88,13 +106,12 @@ class DKVMN_ExtDataset(Dataset):
             target_answers.extend(student_answers_list)
 
         if self.mode == None:
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask)
-
+            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask)
         else:
             pt_questions = self.pt_q_data[idx]
             target_answers = self.pt_a_data[idx]
             target_mask = [True]*10
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(pt_questions)
+            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask), np.array(pt_questions)
 
 
     def isPaddingVector(self, q, padding_value):

@@ -1,7 +1,7 @@
 {
     "exp_name": "tuglet",
     "agent": "DMKTAgent",
-    "mode": "train_cv",
+    "mode": "train",
     "metric": "auc",
   
     "cuda": true,
@@ -14,7 +14,7 @@
     "max_seq_len": 20,
     "q_subseq_len": 8,
     "l_subseq_len": 10, 
-    "max_epoch": 30,
+    "max_epoch": 10,
 
     "stride": 50,
     "validation_split": 0.2,

@@ -88,7 +88,7 @@ class DMKT(nn.Module):
         self.tanh = nn.Tanh()
         self.softmax = nn.Softmax()
     
-    def forward(self, q_data, qa_data, l_data, pt_q_data = None):
+    def forward(self, q_data, qa_data, l_data, l_mask, pt_q_data = None):
         """
         data_type: np.array
         q_data: batch_size, seq_len, a_subseq_len, 8
@@ -100,6 +100,7 @@ class DMKT(nn.Module):
         q_data = q_data.float()
         qa_data = qa_data.float()
         l_data = l_data.float()
+        l_mask = l_mask.float()
 
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
@@ -115,6 +116,7 @@ class DMKT(nn.Module):
         sliced_q_data = torch.chunk(q_data, seq_len, dim=1)
         sliced_qa_data = torch.chunk(qa_data, seq_len, dim=1)
         sliced_l_data = torch.chunk(l_data, seq_len, dim=1)
+        sliced_l_mask = torch.chunk(l_mask, seq_len, dim=1)
 
         batch_pred = []
         for i in range(seq_len):
@@ -131,10 +133,15 @@ class DMKT(nn.Module):
             sliced_q_embed_data = torch.chunk(q_embed_data, question_len, dim=1)
             sliced_a_embed_data = torch.chunk(qa_embed_data, question_len, dim=1)
             sliced_l_embed_data = torch.chunk(l_embed_data, lec_len, dim=1)
-            
+
+            sub_sliced_l_mask = torch.chunk(sliced_l_mask[i].squeeze(1), lec_len, dim=1)
+        
             for j in range(lec_len):
                 l = sliced_l_embed_data[j].squeeze(1)
-                l_correlation_weight = self.compute_correlation_weight(l)
+                l_correlation_weight = self.compute_correlation_weight(l, sub_sliced_l_mask[j].squeeze(1)) # l_correlation_weight: batch_size x (num_concepts + 1)
+
+                l_correlation_weight = l_correlation_weight[:, :-1] # batch_size x num_concepts
+
                 l_read_content += self.read(l_correlation_weight)
                 self.value_matrix = self.write(l_correlation_weight, l)
                 ls += l
@@ -263,7 +270,7 @@ class DMKT(nn.Module):
     #     batch_pred = torch.cat(batch_pred, dim=1)
     #     return batch_pred
 
-    def compute_correlation_weight(self, query_embedded):
+    def compute_correlation_weight(self, query_embedded, mask=None):
         """
         use dot product to find the similarity between question embedding and each concept
         embedding stored as key_matrix
@@ -272,9 +279,14 @@ class DMKT(nn.Module):
         query_embeded : (batch_size, concept_embedding_dim)
         key_matrix : (num_concepts, concept_embedding_dim)
         output: is the correlation distribution between question and all concepts
-        """
+        """ 
 
-        similarity = query_embedded @ self.key_matrix.t()
+        similarity = query_embedded @ self.key_matrix.t() # batch_size x num_concepts
+        if mask != None:
+            batch_size = query_embedded.size(0)
+            similarity = torch.cat((similarity, torch.randn(batch_size, 1)), dim=1)
+            similarity.masked_fill_(mask == 0, -1e10)
+
         correlation_weight = torch.softmax(similarity, dim=1)
         return correlation_weight
 
