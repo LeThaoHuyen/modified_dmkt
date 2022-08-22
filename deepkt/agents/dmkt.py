@@ -22,6 +22,10 @@ from deepkt.dataloaders import *
 cudnn.benchmark = True
 from deepkt.utils.misc import print_cuda_statistics
 import warnings
+from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader
+from torch.utils.data.dataloader import default_collate
+from torch.utils.data.sampler import SubsetRandomSampler
 
 warnings.filterwarnings("ignore")
 
@@ -47,6 +51,8 @@ class DMKTAgent(BaseAgent):
         # note that self.data_loader.train_data is same as self.data_loader.train_loader.dataset
         self.mode = config.mode
         self.metric = config.metric
+        self.num_folds = 10
+        self.batch_size = config.batch_size
 
         config.num_items = self.data_loader.num_items
         config.num_nongradable_items = self.data_loader.num_nongradable_items
@@ -102,28 +108,71 @@ class DMKTAgent(BaseAgent):
         # this loading should be after checking cuda
         self.load_checkpoint(self.config.checkpoint_file)
 
+    
+
     def train(self):
         """
         Main training loop
         :return:
         """
-        for epoch in range(1, self.config.max_epoch + 1):
-            self.train_one_epoch()
-            self.validate()
-            self.current_epoch += 1
-            if self.early_stopping():
-                break
-        
-        print("Best ROC-AUC:", self.best_val_perf)
-        epochs = range(1, self.config.max_epoch + 1)
+        if self.mode == 'train_cv':
+            k_fold = KFold(n_splits = self.num_folds, shuffle=True)
+            dataset = self.data_loader.train_data
+            results = []
 
-        plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
-        plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
-        plt.title('Training and Validation loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
+            for fold, (train_ids, test_ids) in enumerate (k_fold.split(dataset)):
+                print("\n")
+                print(f"Train on fold {fold}:")
+                train_subsampler = SubsetRandomSampler(train_ids)
+                test_subsampler = SubsetRandomSampler(test_ids)
+
+                train_loader = DataLoader(dataset, batch_size = self.batch_size, sampler=train_subsampler)
+                test_loader = DataLoader(dataset, batch_size= self.batch_size,sampler=test_subsampler)
+
+                self.model = DMKT(self.config)
+                self.optimizer = optim.Adam(self.model.parameters(),
+                                        lr=self.config.learning_rate,
+                                        eps=self.config.epsilon)
+                self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                    self.optimizer,
+                    mode='min',
+                    patience=0,
+                    min_lr=1e-5,
+                    factor=0.5,
+                    verbose=True
+                )
+                self.current_epoch = 0
+                for epoch in range(1, self.config.max_epoch +1):
+                    self.train_one_epoch(train_loader)
+                    self.current_epoch += 1
+                    self.validate(test_loader)
+
+                print(f"Best ROC-AUC for fold {fold}:", self.best_val_perf)
+                results.append(self.best_val_perf)
+                self.best_val_perf = 0
+
+            average = sum(results) / len(results)
+            print("-------------------------")
+            print("{}-fold cross validation average result: {:.6f}".format(self.num_folds, average))
+
+        else:
+            for epoch in range(1, self.config.max_epoch + 1):
+                self.train_one_epoch(self.data_loader.train_loader)
+                self.validate(self.data_loader.test_loader)
+                self.current_epoch += 1
+                if self.early_stopping():
+                    break
+            
+            print("Best ROC-AUC:", self.best_val_perf)
+            epochs = range(1, self.config.max_epoch + 1)
+
+            plt.plot(epochs, self.train_loss_list, 'g', label='Training loss')
+            plt.plot(epochs, self.test_loss_list, 'b', label='validation loss')
+            plt.title('Training and Validation loss')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss')
+            plt.legend()
+            plt.show()
 
     def mask_select(self,data, mask):
         res = []
@@ -134,7 +183,7 @@ class DMKTAgent(BaseAgent):
         res = torch.stack(res, 0)
         return res
 
-    def train_one_epoch(self):
+    def train_one_epoch(self, train_loader):
         """
         One epoch of training
         :return:
@@ -142,10 +191,10 @@ class DMKTAgent(BaseAgent):
         self.model.train()
         self.logger.info("\n")
         self.logger.info("Train Epoch: {}".format(self.current_epoch))
-        self.logger.info("learning rate: {}".format(self.optimizer.param_groups[0]['lr']))
+        self.logger.info("Learning rate: {}".format(self.optimizer.param_groups[0]['lr']))
         self.train_loss = 0
         train_elements = 0
-        for batch_idx, data in enumerate(tqdm(self.data_loader.train_loader)):
+        for batch_idx, data in enumerate(tqdm(train_loader)):
             interactions, lec_interactions_list, questions, target_answers, target_mask = data
             # target_answers = [1, 0, 1, 2, ...]
             # output = [[0.02, 0.98, 0], [0.45, 0.55, 0], ...]
@@ -183,7 +232,7 @@ class DMKTAgent(BaseAgent):
         self.scheduler.step(self.train_loss)
         self.logger.info("Train Loss: {:.6f}".format(self.train_loss))
 
-    def validate(self):
+    def validate(self, test_loader):
         """
         One cycle of model validation
         :return:
@@ -202,7 +251,7 @@ class DMKTAgent(BaseAgent):
 
         # print(self.mode)
         with torch.no_grad():
-            for data in self.data_loader.test_loader: # 1 batch
+            for data in test_loader: # 1 batch
                 if self.mode == 'test-post-test':
                     interactions, lec_interactions_list, questions, target_answers, target_mask, pt_questions = data
                     pt_questions = pt_questions.to(self.device)

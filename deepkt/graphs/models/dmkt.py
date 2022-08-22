@@ -82,7 +82,6 @@ class DMKT(nn.Module):
         self.summary_fc = nn.Linear(2 * self.key_dim + 2 * self.value_dim, self.summary_dim)
         self.summary_fc2 = nn.Linear(self.key_dim + self.value_dim, self.summary_dim)
         self.linear_out = nn.Linear(self.summary_dim, 1)
-        # self.linear_out = nn.Linear(self.summary_dim, 3)
 
         # initialize the activate functions
         self.sigmoid = nn.Sigmoid()
@@ -105,9 +104,6 @@ class DMKT(nn.Module):
         batch_size, seq_len = l_data.size(0), l_data.size(1)
         question_len, lec_len =  q_data.size(2), l_data.size(2)
 
-        # self.value_matrix = torch.Tensor(self.num_concepts, self.value_dim).to(self.device)
-        # nn.init.normal_(self.value_matrix, mean=0, std=self.init_std)
-        # self.value_matrix = self.value_matrix.clone().repeat(batch_size, 1, 1)
         self.value_matrix =self.value_matrix_init.clone().repeat(batch_size, 1, 1)
 
         q_read_content = torch.Tensor(batch_size, self.value_dim).to(self.device)
