@@ -10,7 +10,7 @@ class DKVMN_ExtDataset(Dataset):
     prepare the data for data loader, including truncating long sequence and padding
     """
 
-    def __init__(self, q_records, a_records, l_records, sa_records, num_items, max_seq_len, min_seq_len=2,
+    def __init__(self, config, q_records, a_records, l_records, sa_records, num_items, max_seq_len, min_seq_len=2,
                  q_subseq_len=8, l_subseq_len=10, stride=None, train=True, metric="auc", pt_q_records=None, pt_a_records=None, mode=None):
         """
         :param min_seq_len: used to filter out seq. less than min_seq_len
@@ -36,8 +36,9 @@ class DKVMN_ExtDataset(Dataset):
         self.mode = mode
         self.pt_q_data = pt_q_records
         self.pt_a_data = pt_a_records
-        
 
+        self.num_concepts = config.num_concepts
+        
     def __len__(self):
         """
         :return: the number of training samples rather than training users
@@ -61,13 +62,13 @@ class DKVMN_ExtDataset(Dataset):
         answers = self.a_data[idx]   # answers = [A1, A2, ...]
         lectures = self.l_data[idx]
         student_answers = self.sa_data[idx]
-
+        
         lecture_mask = []
 
-        padding_mask = [0]*12
+        padding_mask = [0]*self.num_concepts
         padding_mask.append(1)
 
-        l_mask = [1]*12
+        l_mask = [1]*self.num_concepts
         l_mask.append(0)
 
         for lecture_list in lectures:
@@ -102,8 +103,7 @@ class DKVMN_ExtDataset(Dataset):
             
             interaction_list = np.array(interaction_list, dtype=float)
             interactions.append(interaction_list)
-            # target_answers.extend(answer_list)
-            target_answers.extend(student_answers_list)
+            target_answers.extend(answer_list)
 
         if self.mode == None:
             return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask)

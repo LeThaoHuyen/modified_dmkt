@@ -145,23 +145,23 @@ class BaseAgent:
             perf = metrics.roc_auc_score(self.true_labels, self.pred_labels)
             prec, rec, threshold = metrics.precision_recall_curve(self.true_labels, self.pred_labels)
 
-            max_f1 = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
-            best_threshold = 0.5
-            for x in threshold:
-                f1 = metrics.f1_score(self.true_labels, self.pred_labels > x)
-                if max_f1 < f1:
-                    max_f1 = f1
-                    best_threshold = x
+            # max_f1 = metrics.accuracy_score(self.true_labels, self.pred_labels > 0.5)
+            # best_threshold = 0.5
+            # for x in threshold:
+            #     f1 = metrics.f1_score(self.true_labels, self.pred_labels > x)
+            #     if max_f1 < f1:
+            #         max_f1 = f1
+            #         best_threshold = x
 
-            pr_auc = metrics.auc(rec, prec)
-            accuracy = metrics.f1_score(self.true_labels, self.pred_labels > best_threshold)
+            # pr_auc = metrics.auc(rec, prec)
+            # accuracy = metrics.f1_score(self.true_labels, self.pred_labels > best_threshold)
             
-            self.logger.info('Accuracy: {:.05}'.format(accuracy))
-            self.logger.info('F1: {:.05}'.format(max_f1))
+            # self.logger.info('Accuracy: {:.05}'.format(accuracy))
+            # self.logger.info('F1: {:.05}'.format(max_f1))
             self.logger.info('ROC-AUC: {:.05}'.format(perf))
             # self.logger.info('PR-AUC: {:.05}'.format(pr_auc))
 
-            print(metrics.confusion_matrix(self.true_labels, self.pred_labels > best_threshold))
+            # print(metrics.confusion_matrix(self.true_labels, self.pred_labels > best_threshold))
 
             # fpr, tpr, threshold = metrics.roc_curve(self.true_labels, self.pred_labels)
             # print(threshold)

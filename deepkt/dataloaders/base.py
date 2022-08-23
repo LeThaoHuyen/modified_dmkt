@@ -17,6 +17,7 @@ class BaseDataLoader:
     """
 
     def __init__(self, config):
+        self.config = config
         self.batch_size = config["batch_size"]
         self.shuffle = config["shuffle"]
         self.collate_fn = default_collate
@@ -59,7 +60,7 @@ class BaseDataLoader:
             l_records = data["train"]["l_data"]
             sa_records = data["train"]["sa_data"]
             if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent", "DKVMN_IRT_ExtAgent"]:
-                self.train_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
+                self.train_data = DKVMN_ExtDataset(self.config, q_records, a_records, l_records, sa_records,
                                                    self.num_items,
                                                    self.max_seq_len,
                                                    min_seq_len=self.min_seq_len,
@@ -93,7 +94,7 @@ class BaseDataLoader:
                 sa_records = data["test"]["sa_data"]
                 if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent",
                                   "DKVMN_IRT_ExtAgent"]:
-                    self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
+                    self.test_data = DKVMN_ExtDataset(self.config, q_records, a_records, l_records, sa_records,
                                                       self.num_items,
                                                       self.max_seq_len,
                                                       min_seq_len=self.min_seq_len,
@@ -119,7 +120,7 @@ class BaseDataLoader:
                 #     pt_a_records = data["test"]["pt_sa_data"]
                 pt_a_records = data["test"]["pt_a_data"]
 
-                self.test_data = DKVMN_ExtDataset(q_records, a_records, l_records, sa_records,
+                self.test_data = DKVMN_ExtDataset(self.config, q_records, a_records, l_records, sa_records,
                                                       self.num_items,
                                                       self.max_seq_len,
                                                       min_seq_len=self.min_seq_len,
