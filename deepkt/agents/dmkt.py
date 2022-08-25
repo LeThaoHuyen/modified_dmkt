@@ -196,7 +196,7 @@ class DMKTAgent(BaseAgent):
         train_elements = 0
         
         for batch_idx, data in enumerate(tqdm(train_loader)):
-            interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask = data
+            interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask, question_mask = data
             # target_answers = [1, 0, 1, 2, ...]
             # output = [[0.02, 0.98, 0], [0.45, 0.55, 0], ...]
 
@@ -205,9 +205,11 @@ class DMKTAgent(BaseAgent):
             questions = questions.to(self.device)
             target_answers = target_answers.to(self.device)
             target_mask = target_mask.to(self.device)
+            question_mask = question_mask.to(self.device)
+
             self.optimizer.zero_grad()  # clear previous gradient
             # need to double check the target mask
-            output = self.model(questions, interactions, lec_interactions_list, lecture_mask)
+            output = self.model(questions, interactions, lec_interactions_list, lecture_mask, question_mask)
 
             # label = self.mask_select(target_answers, target_mask)
             # output = self.mask_select(output, target_mask)
@@ -254,22 +256,23 @@ class DMKTAgent(BaseAgent):
         with torch.no_grad():
             for data in test_loader: # 1 batch
                 if self.mode == 'test-post-test':
-                    interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask, pt_questions = data
+                    interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask, question_mask, pt_questions = data
                     pt_questions = pt_questions.to(self.device)
                 else:
-                    interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask = data
+                    interactions, lec_interactions_list, questions, target_answers, target_mask, lecture_mask, question_mask = data
 
                 interactions = interactions.to(self.device)
                 lec_interactions_list = lec_interactions_list.to(self.device)
                 questions = questions.to(self.device)
                 target_answers = target_answers.to(self.device)
                 target_mask = target_mask.to(self.device)
+                question_mask = question_mask.to(self.device)
 
                 if self.mode == 'test-post-test':
-                    output = self.model(questions, interactions, lec_interactions_list, lecture_mask, pt_questions)
+                    output = self.model(questions, interactions, lec_interactions_list, lecture_mask, question_mask, pt_questions)
                     
                 else:
-                    output = self.model(questions, interactions, lec_interactions_list, lecture_mask)
+                    output = self.model(questions, interactions, lec_interactions_list, lecture_mask, question_mask)
                 # output = torch.masked_select(output[:, 1:], target_mask[:, 1:])
                 # label = torch.masked_select(target_answers[:, 1:], target_mask[:, 1:])
                 # test_elements += target_mask[:, 1:].int().sum()

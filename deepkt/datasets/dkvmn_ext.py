@@ -86,32 +86,37 @@ class DKVMN_ExtDataset(Dataset):
         interactions = []
         target_answers = []
         target_mask = []
+        question_mask = []
         for question_list, answer_list, student_answers_list in zip(questions, answers, student_answers):
             interaction_list = []
+            sub_mask = []
             for i, q in enumerate(question_list):
                 # q = [x1, x2, x3, ..., x8]
                 # qa = [x1,x2, .., x8, a, 0, 1, 0] # last 3 elements for student's answer
-                q = list(q)
+                q = list(q)   
                 if self.isPaddingVector(q, self.padding_value):
                     target_mask.append(False)
+                    sub_mask.append(padding_mask)
                 else:
                     target_mask.append(True)
+                    sub_mask.append(l_mask)
 
                 q.append(answer_list[i])
                 # q.append(student_answers_list[i])
                 interaction_list.append(q)
-            
+
+            question_mask.append(sub_mask)
             interaction_list = np.array(interaction_list, dtype=float)
             interactions.append(interaction_list)
             target_answers.extend(answer_list)
 
         if self.mode == None:
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask)
+            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask), np.array(question_mask)
         else:
             pt_questions = self.pt_q_data[idx]
             target_answers = self.pt_a_data[idx]
             target_mask = [True]*10
-            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask), np.array(pt_questions)
+            return np.array(interactions), lectures, questions, np.array(target_answers), np.array(target_mask), np.array(lecture_mask), np.array(question_mask), np.array(pt_questions)
 
 
     def isPaddingVector(self, q, padding_value):
