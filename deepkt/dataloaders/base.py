@@ -59,6 +59,9 @@ class BaseDataLoader:
             a_records = data["train"]["a_data"]
             l_records = data["train"]["l_data"]
             sa_records = data["train"]["sa_data"]
+            q_rules_records = data["train"]["q_rules_data"]
+            l_rules_records = data["train"]["l_rules_data"]
+
             if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent", "DKVMN_IRT_ExtAgent"]:
                 self.train_data = DKVMN_ExtDataset(self.config, q_records, a_records, l_records, sa_records,
                                                    self.num_items,
@@ -68,7 +71,9 @@ class BaseDataLoader:
                                                    l_subseq_len=self.l_subseq_len,
                                                    stride=self.stride,
                                                    train=True,
-                                                   metric=self.metric)
+                                                   metric=self.metric,
+                                                   q_rules_records = q_rules_records,
+                                                   l_rules_records= l_rules_records)
                 
             if self.mode == "train":
                 self.init_kwargs["dataset"] = self.train_data
@@ -92,6 +97,8 @@ class BaseDataLoader:
                 a_records = data["test"]["a_data"]
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
+                q_rules_records = data["test"]["q_rules_data"]
+                l_rules_records = data["test"]["l_rules_data"]
                 if self.agent in ["DMKTAgent", "DKVMN_ExtAgent", "MKT_IRTAgent",
                                   "DKVMN_IRT_ExtAgent"]:
                     self.test_data = DKVMN_ExtDataset(self.config, q_records, a_records, l_records, sa_records,
@@ -102,7 +109,9 @@ class BaseDataLoader:
                                                       l_subseq_len=self.l_subseq_len,
                                                       stride=self.stride,
                                                       train=False,
-                                                      metric=self.metric)
+                                                      metric=self.metric,
+                                                      q_rules_records = q_rules_records,
+                                                      l_rules_records= l_rules_records)
                 self.init_kwargs["batch_size"] = len(self.test_data)
                 self.test_loader = DataLoader(self.test_data, **self.init_kwargs)
             # elif self.mode == "predict":
@@ -113,6 +122,8 @@ class BaseDataLoader:
                 a_records = data["test"]["a_data"]
                 l_records = data["test"]["l_data"]
                 sa_records = data["test"]["sa_data"]
+                q_rules_records = data["test"]["q_rules_data"]
+                l_rules_records = data["test"]["l_rules_data"]
                 pt_q_records = data["test"]["pt_q_data"]
                 # if "pt_a_data" in data["test"]:
                 #     pt_a_records = data["test"]["pt_a_data"]
@@ -129,6 +140,8 @@ class BaseDataLoader:
                                                       stride=self.stride,
                                                       train=False,
                                                       metric=self.metric,
+                                                      q_rules_records = q_rules_records,
+                                                      l_rules_records= l_rules_records,
                                                       pt_q_records=pt_q_records,
                                                       pt_a_records=pt_a_records,
                                                       mode=self.mode)

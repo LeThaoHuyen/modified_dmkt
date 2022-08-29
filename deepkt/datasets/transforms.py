@@ -42,6 +42,26 @@ class RandomCrop(object):
         pass
 
 
+# class Padding(object):
+#     def __init__(self, output_size, side=None, fillvalue=None):
+#         assert isinstance(side, str)
+#         self.side = side
+#         self.output_size = output_size
+#         self.fillvalue = fillvalue
+
+#     def __call__(self, sample):
+#         output_dict = {}
+#         for key in sample.keys():
+#             seq = sample[key]
+#             if self.side in ['right', None]:
+#                 output = list(miter.padded(seq, fillvalue=self.fillvalue, n=self.output_size))
+#             elif self.side is 'left':
+#                 output = list(miter.padded(seq[::-1], fillvalue=self.fillvalue, n=self.output_size))
+#                 output = output[::-1]
+#             else:
+#                 raise AttributeError
+#             output_dict[key] = output
+#         return output_dict
 class Padding(object):
     def __init__(self, output_size, side=None, fillvalue=None):
         assert isinstance(side, str)
@@ -49,16 +69,12 @@ class Padding(object):
         self.output_size = output_size
         self.fillvalue = fillvalue
 
-    def __call__(self, sample):
-        output_dict = {}
-        for key in sample.keys():
-            seq = sample[key]
-            if self.side in ['right', None]:
-                output = list(miter.padded(seq, fillvalue=self.fillvalue, n=self.output_size))
-            elif self.side is 'left':
-                output = list(miter.padded(seq[::-1], fillvalue=self.fillvalue, n=self.output_size))
-                output = output[::-1]
-            else:
-                raise AttributeError
-            output_dict[key] = output
-        return output_dict
+    def __call__(self, seq):
+        if self.side in ['right', None]:
+            output = list(miter.padded(seq, fillvalue=self.fillvalue, n=self.output_size))
+        elif self.side == 'left':
+            output = list(miter.padded(seq[::-1], fillvalue=self.fillvalue, n=self.output_size))
+            output = output[::-1]
+        else:
+            raise AttributeError
+        return output
